@@ -1,7 +1,7 @@
 import boto3 as AWS
-from credentials import USERNAME, SPOTIPY_CLIENT_ID, SPOTIPY_CLIENT_SECRET, SPOTIPY_REDIRECT_URI, AWS_ACCESS_KEY,\
+from src.SpotifyLights.credentials import USERNAME, SPOTIPY_CLIENT_ID, SPOTIPY_CLIENT_SECRET, SPOTIPY_REDIRECT_URI, AWS_ACCESS_KEY,\
     AWS_SECRET_KEY
-from dynamodb_client import DynamoDBClient
+from src.SpotifyLights.dynamodb_client import DynamoDBClient
 import numpy as np
 from scipy.interpolate import interp1d
 import spotipy
@@ -9,8 +9,8 @@ import spotipy.util as util
 import sys
 import threading
 import time
-from Visualizations.LoudnessLengthEdgeFadeVisualizer import LoudnessLengthEdgeFadeVisualizer
-from Visualizations.LoudnessLengthWithPitchVisualizer import LoudnessLengthWithPitchVisualizer
+from src.SpotifyLights.Visualizations.LoudnessLengthEdgeFadeVisualizer import LoudnessLengthEdgeFadeVisualizer
+from src.SpotifyLights.Visualizations.LoudnessLengthWithPitchVisualizer import LoudnessLengthWithPitchVisualizer
 
 __author__ = "Yusuf Sezer"
 

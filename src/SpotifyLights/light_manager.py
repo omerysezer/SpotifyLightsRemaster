@@ -2,11 +2,11 @@ import sys
 import threading
 import time
 
-from Animations.LoadingAnimator import LoadingAnimator
-from credentials import AWS_ACCESS_KEY, AWS_SECRET_KEY, USER
-from dynamodb_client import DynamoDBClient
-from spotify_visualizer import SpotifyVisualizer
-from Visualizations.LoudnessLengthEdgeFadeVisualizer import LoudnessLengthEdgeFadeVisualizer
+from src.SpotifyLights.Animations.LoadingAnimator import LoadingAnimator
+from src.SpotifyLights.credentials import AWS_ACCESS_KEY, AWS_SECRET_KEY, USER
+from src.SpotifyLights.dynamodb_client import DynamoDBClient
+from src.SpotifyLights.spotify_visualizer import SpotifyVisualizer
+from src.SpotifyLights.Visualizations.LoudnessLengthEdgeFadeVisualizer import LoudnessLengthEdgeFadeVisualizer
 
 import logging
 
@@ -18,7 +18,7 @@ def _init_visualizer(dev_mode, n_pixels, base_color):
         from virtual_led_strip import VirtualLEDStrip
         visualization_device = VirtualLEDStrip()
     else:
-        from led_strip import LED_STRIP
+        from src.SpotifyLights.led_strip import LED_STRIP
         visualization_device = LED_STRIP(bus_method='bitbang', num_led=n_pixels, global_brightness=23, mosi=10, sclk=11, order='rgb')
 
     visualizer = LoudnessLengthEdgeFadeVisualizer(visualization_device, n_pixels, base_color)
@@ -69,14 +69,14 @@ def manage(dev_mode):
         # If the animation has not been instantiated or the thread has
         # completed (i.e. we killed it), we need to reinstantiate and restart.
         if not visualizer_thread or not visualizer_thread.is_alive():
-            visualizer, loading_animator = _init_visualizer(developer_mode, n_pixels, base_color)
+            visualizer, loading_animator = _init_visualizer(dev_mode, n_pixels, base_color)
             spotify_visualizer = SpotifyVisualizer(visualizer, loading_animator)
             visualizer_thread = threading.Thread(target=spotify_visualizer.launch_visualizer, name="visualizer_thread")
             visualizer_thread.start()
 
         time.sleep(5)
 
-if __name__ == "__main__":
+def activate():
     """ The outmost layer of the system.
 
     This is the entrypoint to the project and the outmost layer of the system.

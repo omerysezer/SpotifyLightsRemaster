@@ -1,6 +1,6 @@
 import git
 
-from dynamodb_client import DynamoDBClient
+from src.SpotifyLights.dynamodb_client import DynamoDBClient
 
 def parse_git_settings(record):
     """ Parse and return the git branch and commit ID from a DynamoDB record

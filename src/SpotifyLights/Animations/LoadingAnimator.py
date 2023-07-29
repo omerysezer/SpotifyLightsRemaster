@@ -1,4 +1,4 @@
-from Animations.Animator import Animator
+from src.SpotifyLights.Animations.Animator import Animator
 
 _author_ = "Yusuf Sezer"
 

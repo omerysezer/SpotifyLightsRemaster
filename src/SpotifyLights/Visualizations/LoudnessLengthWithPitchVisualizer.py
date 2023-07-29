@@ -1,4 +1,4 @@
-from Visualizations.Visualizer import Visualizer
+from src.SpotifyLights.Visualizations.Visualizer import Visualizer
 
 
 class LoudnessLengthWithPitchVisualizer(Visualizer):
