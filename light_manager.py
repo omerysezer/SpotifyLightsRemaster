@@ -8,13 +8,18 @@ from dynamodb_client import DynamoDBClient
 from spotify_visualizer import SpotifyVisualizer
 from Visualizations.LoudnessLengthEdgeFadeVisualizer import LoudnessLengthEdgeFadeVisualizer
 
+import logging
+
+# Set the logging level to WARNING (or higher) for the root logger
+logging.basicConfig(level=logging.WARNING)
+
 def _init_visualizer(dev_mode, n_pixels, base_color):
     if dev_mode:
         from virtual_led_strip import VirtualLEDStrip
         visualization_device = VirtualLEDStrip()
     else:
-        from driver import apa102
-        visualization_device = apa102.APA102(num_led=n_pixels, global_brightness=23, mosi=10, sclk=11, order='rgb')
+        from led_strip import LED_STRIP
+        visualization_device = LED_STRIP(bus_method='bitbang', num_led=n_pixels, global_brightness=23, mosi=10, sclk=11, order='rgb')
 
     visualizer = LoudnessLengthEdgeFadeVisualizer(visualization_device, n_pixels, base_color)
     loading_animator = LoadingAnimator(visualization_device, n_pixels)
@@ -36,7 +41,7 @@ def manage(dev_mode):
     dynamoDBClient = DynamoDBClient()
     base_color = None # We always want to update the lights on first start.
     visualizer_thread = None
-    n_pixels = 240
+    n_pixels = 175
     visualizer = None
     spotify_visualizer = None
 

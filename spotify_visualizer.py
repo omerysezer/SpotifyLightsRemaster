@@ -222,7 +222,7 @@ class SpotifyVisualizer:
         text = "A skip has occurred."
         print(SpotifyVisualizer._make_text_effect(text, ["blue", "bold"]))
 
-    def _continue_loading_data(self, wait=0.5):
+    def _continue_loading_data(self, wait=0.01):
         """Continuously loads and prepares chunks of data. Called asynchronously (worker thread).
 
         Args:
@@ -310,7 +310,7 @@ class SpotifyVisualizer:
         self.buffer_lock.release()
         return to_return
 
-    def _load_track_data(self, chunk_length=12):
+    def _load_track_data(self, chunk_length=30):
         """Obtain track data from the Spotify API and run necessary analysis to generate data needed for visualization.
 
         Each call to this function analyzes the next chunk_length seconds of track data and produces the appropriate
@@ -453,21 +453,25 @@ class SpotifyVisualizer:
                 text = "Killing visualization thread."
                 print(SpotifyVisualizer._make_text_effect(text, ["red", "bold"]))
                 exit(0)
-
+            path = 0
             try:
                 if self.is_playing and loudness_func and pitch_funcs:
+                    path = 1
                     pos = self.playback_pos
                     self._push_visual_to_strip(loudness_func, pitch_funcs, pos)
                 elif not loudness_func or not pitch_funcs:
+                    path = 2
                     funcs = self._get_buffers_for_pos(pos)
                     loudness_func, pitch_funcs = funcs if funcs else (None, None)
                     self.loading_animator.animate() # play one frame of animation
                 else:
+                    path = 3
                     self.loading_animator.animate() # play one frame of animation
             # If pitch or loudness value out of range, find the interpolated functions for the current position
             except ValueError as err:
                 text = "Caught ValueError: {}\nSearching for interpolated funcs for current position...".format(err)
                 print(SpotifyVisualizer._make_text_effect(text, ["red", "bold"]))
+                print(SpotifyVisualizer._make_text_effect(str(path), ['blue', 'bold']))
                 funcs = self._get_buffers_for_pos(pos)
                 if funcs:
                     loudness_func, pitch_funcs = funcs

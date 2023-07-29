@@ -66,7 +66,7 @@ class LoudnessLengthWithPitchVisualizer(Visualizer):
                     color_strength = 2.0 - color_strength
                 faded_r, faded_g, faded_b = LoudnessLengthWithPitchVisualizer\
                     .apply_gradient_fade((zone_r, zone_g, zone_b), color_strength, start_color)
-                strip.set_pixel(j, faded_r, faded_g, faded_b, brightness)
+                self.strip.set_pixel(j, faded_r, faded_g, faded_b, brightness)
 
         # Make sure to turn off pixels that are not in use and push visualization to the strip
         self.strip.fill(0, lower, 0, 0, 0, 0)
