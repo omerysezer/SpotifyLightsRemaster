@@ -13,19 +13,20 @@ import threading
 app = Flask(__name__)
 
 @app.route('/login')
-def get_incomes():
+def handle_spotify_auth_request():
     state = ''.join(random.choices(string.ascii_letters + string.digits, k = 16))
     auth_request = f'https://accounts.spotify.com/authorize?response_type=code&client_id={SPOTIPY_CLIENT_ID}&scope={permission_scopes}&redirect_uri={SPOTIPY_REDIRECT_URI}&state={state}'
     return redirect(auth_request)
 
 @app.route('/')
-def hi():
+def get_spotify_token_and_cache_it():
     args = request.args
     code = args.get('code')
     state = args.get('state')
     oauth = SpotifyOAuth(username=USERNAME, client_id=SPOTIPY_CLIENT_ID, client_secret=SPOTIPY_CLIENT_SECRET, redirect_uri=SPOTIPY_REDIRECT_URI, 
-                         scope=permission_scopes, cache_path=f"./src/Files/.cache-{USERNAME}", open_browser=False)
+                         scope=permission_scopes, cache_path=f"./src/Files/.cache-{USERNAME}", open_browser=False, state=state)
 
-    return f"code: {code}\n\n\n\n\nstate: {state}"
+    oauth.get_access_token(code=code, check_cache=True)
+    return f"LOGGED IN!!!"
 
 app.run(host='192.168.1.80', port=9090)
