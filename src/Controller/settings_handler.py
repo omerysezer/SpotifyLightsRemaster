@@ -58,14 +58,14 @@ class SettingsHandler():
         settings = self._read_settings()
         return tuple(settings['GIT_COMMIT'])
 
-    def update_lights_on_after_startup(self, truth_value):
+    def update_default_behaviour(self, truth_value):
         settings = self._read_settings()
         settings['LIGHTS_ON_AFTER_START_UP'] = truth_value
         self._write_settings(settings)
 
-    def get_lights_on_after_startup(self):
+    def get_default_behaviour(self):
         settings = self._read_settings()
-        return settings['LIGHTS_ON_AFTER_START_UP']
+        return settings['DEFAULT_BEHAVIOUR']
     
     def reset_settings(self):
         self._write_settings(DEFAULT_SETTINGS)

@@ -25,7 +25,8 @@ class Controller:
         self.controller_to_lights_queue = Queue() # a queue so the controller can pass messages to spotify lights manager thread
         self.light_to_controller_queue = Queue() # a queue so spotify lights manager thread can pass messages to controller
         self.spotify_lights_kill_sentinel = object()
-        self.spotify_lights_are_on = False
+
+        self.current_command = None
 
     def _token_is_valid(self):
         try:
@@ -41,43 +42,46 @@ class Controller:
         
     def run(self):
         self.authenticated = self._token_is_valid()
-
+        
         self.api_thread = threading.Thread(target=self.api.run, name="rest_api_thread")
         self.api_thread.start()
-
-        if self.settings_handler.get_lights_on_after_startup() and self.authenticated:
-            self.spotify_lights_thread = threading.Thread(target=manage, name="spotify_lights_thread", args=(False, self.settings_handler.get_base_color(), self.oauth_handler,
-                                                                                                  self.controller_to_lights_queue, self.light_to_controller_queue, self.spotify_lights_kill_sentinel))
-            self.spotify_lights_thread.start()
-            self.spotify_lights_are_on = True
-        else:
-            while True:
-                pass
         
         while True:
-            self._token_is_valid()
-            
+            self.authenticated = self._token_is_valid() # validate token to ensure connection to spotify is not lost
             if not self.api_communicaton_queue.empty():
                 command = self.api_communicaton_queue.get()
                 if command['COMMAND'] == 'SWITCH_SPOTIFY_LIGHTS_ON_OFF':
-                    if self.spotify_lights_are_on:
-                        self.controller_to_lights_queue.put(self.spotify_lights_kill_sentinel)
-                        self.controller_to_lights_queue.join()
-                        self.spotify_lights_thread.join()
-
-                        self.controller_to_lights_queue = Queue() # clear the queues if there were any messages waiting
-                        self.light_to_controller_queue = Queue()
-
-                        self.spotify_lights_are_on = False
+                    if self._spotify_lights_are_running():
+                        self._kill_spotify_lights()
+                        self.current_command = "SPOTIFY_LIGHTS_OFF"
                     else:
-                        self._create_spotify_lights_thread()
-                        self.spotify_lights_thread.start()
-                        self.spotify_lights_are_on = True
-                    
+                        self._start_spotify_lights()
+                        self.current_command = "SPOTIFY_LIGHTS_ON"
                     self.api_communicaton_queue.task_done()
 
-    def _create_spotify_lights_thread(self):
+            # default behaviour should only be triggered if there is no overriding command in self.current_command
+            if not self.current_command:
+                if self.settings_handler.get_default_behaviour() == "SPOTIFY_LIGHTS" and self.authenticated and not self._spotify_lights_are_running():
+                    self._start_spotify_lights()
+                elif self.settings_handler.get_default_behaviour() == "LIGHTS_OFF" and self._spotify_lights_are_running():
+                    self._kill_spotify_lights()
+
+
+    def _start_spotify_lights(self):
         self.controller_to_lights_queue = Queue() # a queue so the controller can pass messages to spotify lights manager thread
         self.light_to_controller_queue = Queue() # a queue so spotify lights manager thread can pass messages to controller
         self.spotify_lights_thread = threading.Thread(target=manage, name="spotify_lights_thread", args=(False, self.settings_handler.get_base_color(), self.oauth_handler,
                                                                                                   self.controller_to_lights_queue, self.light_to_controller_queue, self.spotify_lights_kill_sentinel))
+        self.spotify_lights_thread.start()
+
+    def _kill_spotify_lights(self):
+        self.controller_to_lights_queue.put(self.spotify_lights_kill_sentinel)
+        self.controller_to_lights_queue.join() # wait for spotify lights to mark command as completed
+        self.spotify_lights_thread.join() 
+
+        self.controller_to_lights_queue = Queue() # clear the queues if there were any messages waiting
+        self.light_to_controller_queue = Queue()
+
+    def _spotify_lights_are_running(self):
+        return self.spotify_lights_thread and self.spotify_lights_thread.is_alive()
+            

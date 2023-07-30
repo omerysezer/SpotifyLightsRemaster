@@ -1,5 +1,5 @@
 {
-    "LIGHTS_ON_AFTER_START_UP": true,
+    "DEFAULT_BEHAVIOUR": "SPOTIFY_LIGHTS",
     "BASE_RGB": [
         255,
         255,
