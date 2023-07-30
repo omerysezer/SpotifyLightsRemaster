@@ -1,5 +1,5 @@
 import boto3 as AWS
-from src.SpotifyLights.credentials import USERNAME, SPOTIPY_CLIENT_ID, SPOTIPY_CLIENT_SECRET, SPOTIPY_REDIRECT_URI, AWS_ACCESS_KEY,\
+from src.Files.credentials import USERNAME, SPOTIPY_CLIENT_ID, SPOTIPY_CLIENT_SECRET, SPOTIPY_REDIRECT_URI, AWS_ACCESS_KEY,\
     AWS_SECRET_KEY
 from src.SpotifyLights.dynamodb_client import DynamoDBClient
 import numpy as np
@@ -93,7 +93,9 @@ class SpotifyVisualizer:
                                            self.permission_scopes,
                                            SPOTIPY_CLIENT_ID,
                                            SPOTIPY_CLIENT_SECRET,
-                                           SPOTIPY_REDIRECT_URI)
+                                           SPOTIPY_REDIRECT_URI, 
+                                           cache_path=f"./src/Files/.cache-{USERNAME}")
+
         if token:
             # Instantiate multiple Spotify objects because sharing a Spotify object can block threads
             self.sp_gen = spotipy.Spotify(auth=token)

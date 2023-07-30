@@ -3,7 +3,7 @@ import threading
 import time
 
 from src.SpotifyLights.Animations.LoadingAnimator import LoadingAnimator
-from src.SpotifyLights.credentials import AWS_ACCESS_KEY, AWS_SECRET_KEY, USER
+from src.Files.credentials import AWS_ACCESS_KEY, AWS_SECRET_KEY, USER
 from src.SpotifyLights.dynamodb_client import DynamoDBClient
 from src.SpotifyLights.spotify_visualizer import SpotifyVisualizer
 from src.SpotifyLights.Visualizations.LoudnessLengthEdgeFadeVisualizer import LoudnessLengthEdgeFadeVisualizer
@@ -15,7 +15,7 @@ logging.basicConfig(level=logging.WARNING)
 
 def _init_visualizer(dev_mode, n_pixels, base_color):
     if dev_mode:
-        from virtual_led_strip import VirtualLEDStrip
+        from src.SpotifyLights.virtual_led_strip import VirtualLEDStrip
         visualization_device = VirtualLEDStrip()
     else:
         from src.SpotifyLights.led_strip import LED_STRIP
@@ -26,7 +26,7 @@ def _init_visualizer(dev_mode, n_pixels, base_color):
     return (visualizer, loading_animator)
 
 
-def manage(dev_mode):
+def manage(dev_mode, initial_base_color):
     """ Lifecycle manager for the program
 
     In order to restart the lights remotely if an update is required, this level
@@ -38,7 +38,6 @@ def manage(dev_mode):
     pi or a developer's machine.
 
     """
-    dynamoDBClient = DynamoDBClient()
     base_color = None # We always want to update the lights on first start.
     visualizer_thread = None
     n_pixels = 175
@@ -46,25 +45,17 @@ def manage(dev_mode):
     spotify_visualizer = None
 
     while True:
-        record = dynamoDBClient.get_record()
-
-        settings = record['settings']['M']
-        base_color_r = int(settings['baseColorRedValue']['N'])
-        base_color_g = int(settings['baseColorGreenValue']['N'])
-        base_color_b = int(settings['baseColorBlueValue']['N'])
-        new_base_color = (base_color_r, base_color_g, base_color_b)
+        new_base_color = initial_base_color
         if new_base_color != base_color:
             if visualizer:
-                visualizer.set_primary_color(new_base_color)
+                visualizer.set_primary_color(base_color)
             base_color = new_base_color
 
-        if bool(record['shouldRestart']['BOOL']):
-            if spotify_visualizer:
-                spotify_visualizer.terminate_visualizer()
-                while visualizer_thread.is_alive():
-                    print("Waiting for visualizer to terminate...")
-                    time.sleep(1)
-            dynamoDBClient.update_restart_flag()
+        if spotify_visualizer:
+            spotify_visualizer.terminate_visualizer()
+            while visualizer_thread.is_alive():
+                print("Waiting for visualizer to terminate...")
+                time.sleep(1)
 
         # If the animation has not been instantiated or the thread has
         # completed (i.e. we killed it), we need to reinstantiate and restart.
@@ -74,6 +65,7 @@ def manage(dev_mode):
             visualizer_thread = threading.Thread(target=spotify_visualizer.launch_visualizer, name="visualizer_thread")
             visualizer_thread.start()
 
+        visualizer_thread.join()
         time.sleep(5)
 
 def activate():

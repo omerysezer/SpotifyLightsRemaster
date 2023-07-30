@@ -1,6 +1,6 @@
 import boto3 as AWS
 
-from src.SpotifyLights.credentials import AWS_ACCESS_KEY, AWS_SECRET_KEY, USER, TABLE_NAME
+from src.Files.credentials import AWS_ACCESS_KEY, AWS_SECRET_KEY, USER, TABLE_NAME
 
 class _DynamoDBClient():
     """ Client object to facilitate access to user settings in DynamoDB
