@@ -26,7 +26,7 @@ def _init_visualizer(dev_mode, n_pixels, base_color):
     return (visualizer, loading_animator)
 
 
-def manage(dev_mode, initial_base_color, controller_to_lights_queue, lights_to_controller_queue, kill_sentinel):
+def manage(dev_mode, initial_base_color, auth_manager, controller_to_lights_queue, lights_to_controller_queue, kill_sentinel):
     """ Lifecycle manager for the program
 
     In order to restart the lights remotely if an update is required, this level
@@ -73,7 +73,7 @@ def manage(dev_mode, initial_base_color, controller_to_lights_queue, lights_to_c
         # completed (i.e. we killed it), we need to reinstantiate and restart.
         if not visualizer_thread or not visualizer_thread.is_alive():
             visualizer, loading_animator = _init_visualizer(dev_mode, n_pixels, base_color)
-            spotify_visualizer = SpotifyVisualizer(visualizer, loading_animator)
+            spotify_visualizer = SpotifyVisualizer(visualizer, loading_animator, auth_manager)
             visualizer_thread = threading.Thread(target=spotify_visualizer.launch_visualizer, name="visualizer_thread")
             visualizer_thread.start()
 

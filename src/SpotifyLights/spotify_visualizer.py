@@ -68,7 +68,7 @@ class SpotifyVisualizer:
             visualizer (Visualizer): the visualization that holds the logic for the animation to be used.
     """
 
-    def __init__(self, visualizer, loading_animator):
+    def __init__(self, visualizer, loading_animator, auth_manager):
         self.buffer_lock = threading.Lock()
         self.data_segments = []
         self.interpolated_loudness_buffer = []
@@ -85,30 +85,19 @@ class SpotifyVisualizer:
         self.track = None
         self.track_duration = None
         self.visualizer = visualizer
-
+        self.auth_manager = auth_manager
 
     def authorize(self):
         """Handle the authorization workflow for the Spotify API.
         """
-        token = util.prompt_for_user_token(USERNAME,
-                                           self.permission_scopes,
-                                           SPOTIPY_CLIENT_ID,
-                                           SPOTIPY_CLIENT_SECRET,
-                                           SPOTIPY_REDIRECT_URI, 
-                                           cache_path=f"./src/Files/.cache-{USERNAME}")
-
-        if token:
-            # Instantiate multiple Spotify objects because sharing a Spotify object can block threads
-            self.sp_gen = spotipy.Spotify(auth=token)
-            self.sp_vis = spotipy.Spotify(auth=token)
-            self.sp_sync = spotipy.Spotify(auth=token)
-            self.sp_load = spotipy.Spotify(auth=token)
-            self.sp_skip = spotipy.Spotify(auth=token)
-            self.sp_pause = spotipy.Spotify(auth=token)
-            text = "Successfully connected to {}'s account.".format(self.sp_gen.me()["display_name"])
-            print(SpotifyVisualizer._make_text_effect(text, ["green"]))
-        else:
-            raise Exception("Unable to authenticate Spotify user.")
+        self.sp_gen = spotipy.Spotify(auth_manager=self.auth_manager)
+        self.sp_vis = spotipy.Spotify(auth_manager=self.auth_manager)
+        self.sp_sync = spotipy.Spotify(auth_manager=self.auth_manager)
+        self.sp_load = spotipy.Spotify(auth_manager=self.auth_manager)
+        self.sp_skip = spotipy.Spotify(auth_manager=self.auth_manager)
+        self.sp_pause = spotipy.Spotify(auth_manager=self.auth_manager)
+        text = "Successfully connected to {}'s account.".format(self.sp_gen.me()["display_name"])
+        print(SpotifyVisualizer._make_text_effect(text, ["green"]))
 
     def is_running(self):
         return not self.should_terminate
