@@ -2,6 +2,7 @@ import json
 import os
 
 DEFAULT_SETTINGS = {
+    'LIGHTS_ON_AFTER_START_UP': True,
     'BASE_RGB': (255, 255, 255),
     'GIT_BRANCH': 'master',
     'GIT_COMMIT_ID': 'dd1490f'
@@ -57,5 +58,14 @@ class SettingsHandler():
         settings = self._read_settings()
         return tuple(settings['GIT_COMMIT'])
 
+    def update_lights_on_after_startup(self, truth_value):
+        settings = self._read_settings()
+        settings['LIGHTS_ON_AFTER_START_UP'] = truth_value
+        self._write_settings(settings)
+
+    def get_lights_on_after_startup(self):
+        settings = self._read_settings()
+        return settings['LIGHTS_ON_AFTER_START_UP']
+    
     def reset_settings(self):
         self._write_settings(DEFAULT_SETTINGS)

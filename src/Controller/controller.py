@@ -14,6 +14,11 @@ class Controller:
                          scope=permission_scopes, cache_path=f"./src/Files/.cache-{USERNAME}", open_browser=False)
 
     def run(self):
-        self.api_thread = threading.Thread(target=manage, name="spotify_lights_thread", args=(False, self.settings_handler.get_base_color(), self.oauth_handler))
-        self.api_thread.start()
-        self.api_thread.join()
+        print(self.settings_handler.get_lights_on_after_startup())
+        if self.settings_handler.get_lights_on_after_startup():
+            self.api_thread = threading.Thread(target=manage, name="spotify_lights_thread", args=(False, self.settings_handler.get_base_color(), self.oauth_handler))
+            self.api_thread.start()
+            self.api_thread.join()
+        else:
+            while True:
+                pass
