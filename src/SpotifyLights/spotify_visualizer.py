@@ -86,6 +86,7 @@ class SpotifyVisualizer:
         self.track_duration = None
         self.visualizer = visualizer
 
+
     def authorize(self):
         """Handle the authorization workflow for the Spotify API.
         """
@@ -169,7 +170,10 @@ class SpotifyVisualizer:
             print(SpotifyVisualizer._make_text_effect(text, ["green"]))
             for thread in threads:
                 thread.join()
+
+            self.visualizer.reset()
             text = "Visualization finished."
+            
             print(SpotifyVisualizer._make_text_effect(text, ["green"]))
 
     def terminate_visualizer(self):

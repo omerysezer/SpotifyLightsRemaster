@@ -26,7 +26,7 @@ def _init_visualizer(dev_mode, n_pixels, base_color):
     return (visualizer, loading_animator)
 
 
-def manage(dev_mode, initial_base_color):
+def manage(dev_mode, initial_base_color, controller_to_lights_queue, lights_to_controller_queue, kill_sentinel):
     """ Lifecycle manager for the program
 
     In order to restart the lights remotely if an update is required, this level
@@ -45,13 +45,25 @@ def manage(dev_mode, initial_base_color):
     spotify_visualizer = None
 
     while True:
+        if not controller_to_lights_queue.empty():
+            command = controller_to_lights_queue.get()
+
+            if command is kill_sentinel:
+                if spotify_visualizer:
+                    spotify_visualizer.terminate_visualizer()
+                if visualizer_thread and visualizer_thread.is_alive():
+                    visualizer_thread.join()
+
+                controller_to_lights_queue.task_done()
+                return
+
         new_base_color = initial_base_color
         if new_base_color != base_color:
             if visualizer:
                 visualizer.set_primary_color(base_color)
             base_color = new_base_color
 
-        if spotify_visualizer:
+        if spotify_visualizer and visualizer_thread and not visualizer_thread.is_alive():
             spotify_visualizer.terminate_visualizer()
             while visualizer_thread.is_alive():
                 print("Waiting for visualizer to terminate...")
@@ -65,8 +77,7 @@ def manage(dev_mode, initial_base_color):
             visualizer_thread = threading.Thread(target=spotify_visualizer.launch_visualizer, name="visualizer_thread")
             visualizer_thread.start()
 
-        visualizer_thread.join()
-        time.sleep(5)
+        time.sleep(1)
 
 def activate():
     """ The outmost layer of the system.
@@ -102,5 +113,5 @@ def activate():
     # VirutalVisualizer GUI. Since VirtualLEDStrip is a singleton class, we
     # can just reinstantiate the VirtualLEDStrip
     if developer_mode:
-        from virtual_led_strip import VirtualLEDStrip
+        from src.SpotifyLights.virtual_led_strip import VirtualLEDStrip
         VirtualLEDStrip().start_visualization()
