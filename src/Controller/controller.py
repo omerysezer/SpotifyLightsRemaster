@@ -50,14 +50,17 @@ class Controller:
             self.authenticated = self._token_is_valid() # validate token to ensure connection to spotify is not lost
             if not self.api_communicaton_queue.empty():
                 command = self.api_communicaton_queue.get()
-                if command['COMMAND'] == 'SWITCH_SPOTIFY_LIGHTS_ON_OFF':
+                if command['COMMAND'] == 'LIGHTS_OFF':
                     if self._spotify_lights_are_running():
                         self._kill_spotify_lights()
-                        self.current_command = "SPOTIFY_LIGHTS_OFF"
-                    else:
+                        self.current_command = command['COMMAND']
+                if command['COMMAND'] == 'SPOTIFY_LIGHTS_ON':
+                    if not self._spotify_lights_are_running():
                         self._start_spotify_lights()
-                        self.current_command = "SPOTIFY_LIGHTS_ON"
-                    self.api_communicaton_queue.task_done()
+                        self.current_command = command['COMMAND']
+                        
+                self.api_communicaton_queue.task_done()
+
 
             # default behaviour should only be triggered if there is no overriding command in self.current_command
             if not self.current_command:

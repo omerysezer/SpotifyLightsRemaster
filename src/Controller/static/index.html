@@ -1,0 +1,42 @@
+<h1>
+    OMER'S ROOM LIGHTS
+</h1>
+
+<label>
+    <input type="radio" id="LIGHTS_OFF" name="light_setting" value="HTML">
+    <i>Lights Off</i>
+</label>
+
+<br/>
+
+<label>
+    <input type="radio" id="LIGHTS_ON" name="light_setting" value="HELLO">
+    <i>Spotify Lights On</i>
+</label>
+
+<script>
+    function on_radio_click(){
+        setting_to_send = null
+
+        if(document.getElementById("LIGHTS_OFF").checked){
+            document.getElementById("LIGHTS_ON").checked = false
+            setting_to_send = "LIGHTS_OFF"    
+        }else if(document.getElementById("LIGHTS_ON").checked){
+            document.getElementById("LIGHTS_OFF").checked = false
+            setting_to_send = "SPOTIFY_LIGHTS_ON"
+        }
+
+        fetch("http://192.168.1.80:9090/light_setting", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json", // Set the appropriate content type for your data
+            },
+            body: JSON.stringify({ light_setting: setting_to_send }), // Convert your data to JSON if needed
+        })
+    }
+    
+    const buttons = document.getElementsByName("light_setting") 
+    for(let i = 0; i < buttons.length; i++){
+        buttons[i].addEventListener("click", on_radio_click)
+    }
+</script>
