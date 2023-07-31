@@ -47,7 +47,8 @@ class API:
                 self.communication_queue.put({'COMMAND': 'LIGHTS_OFF'})
             elif data == "SPOTIFY_LIGHTS_ON":
                 self.communication_queue.put({'COMMAND': 'SPOTIFY_LIGHTS_ON'})
-
+            elif data == "ANIMATION_LIGHTS_ON":
+                self.communication_queue.put({'COMMAND': 'ANIMATION_LIGHTS_ON'})
             self.communication_queue.join()
             return 'Done'
 

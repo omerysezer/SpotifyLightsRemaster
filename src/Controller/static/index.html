@@ -3,14 +3,17 @@
 </h1>
 
 <label>
-    <input type="radio" id="LIGHTS_OFF" name="light_setting" value="HTML">
+    <input type="radio" id="LIGHTS_OFF" name="light_setting" value="LIGHTS_OFF">
     <i>Lights Off</i>
 </label>
-
 <br/>
-
 <label>
-    <input type="radio" id="LIGHTS_ON" name="light_setting" value="HELLO">
+    <input type="radio" id="SPOTIFY_LIGHTS_ON" name="light_setting" value="SPOTIFY_LIGHTS_ON">
+    <i>Spotify Lights On</i>
+</label>
+<br/>
+<label>
+    <input type="radio" id="ANIMATION_LIGHTS_ON" name="light_setting" value="ANIMATION_LIGHTS_ON">
     <i>Spotify Lights On</i>
 </label>
 
@@ -19,11 +22,22 @@
         setting_to_send = null
 
         if(document.getElementById("LIGHTS_OFF").checked){
-            document.getElementById("LIGHTS_ON").checked = false
+
+            document.getElementById("SPOTIFY_LIGHTS_ON").checked = false
+            document.getElementById("ANIMATION_LIGHTS_ON").checked = false
             setting_to_send = "LIGHTS_OFF"    
-        }else if(document.getElementById("LIGHTS_ON").checked){
+        }
+        else if(document.getElementById("SPOTIFY_LIGHTS_ON").checked){
+
             document.getElementById("LIGHTS_OFF").checked = false
+            document.getElementById("ANIMATION_LIGHTS_ON").checked = false
             setting_to_send = "SPOTIFY_LIGHTS_ON"
+        }
+        else if(document.getElementById("ANIMATION_LIGHTS_ON").checked){
+
+            document.getElementById("LIGHTS_OFF").checked = false
+            document.getElementById("SPOTIFY_LIGHTS_ON").checked = false
+            setting_to_send = "ANIMATION_LIGHTS_ON"
         }
 
         fetch("http://192.168.1.80:9090/light_setting", {

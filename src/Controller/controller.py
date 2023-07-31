@@ -1,18 +1,18 @@
 from src.Controller.settings_handler import SettingsHandler
 from src.SpotifyLights.light_manager import manage
 from src.Controller.rest_api import API
-from src.Files.credentials import USERNAME, SPOTIPY_CLIENT_ID, SPOTIPY_CLIENT_SECRET, SPOTIPY_REDIRECT_URI
+from src.Files.credentials import USERNAME, SPOTIPY_CLIENT_ID, SPOTIPY_CLIENT_SECRET, SPOTIPY_REDIRECT_URI, PERMISSION_SCOPE
 from spotipy.oauth2 import SpotifyOAuth
+from src.Animations.animation_controller import AnimationController
 import threading
 from queue import Queue
 import json
-permission_scopes = "user-modify-playback-state user-read-currently-playing user-read-playback-state"
 
 class Controller:
     def __init__(self):
         self.settings_handler = SettingsHandler("./src/Files/settings.json")
         self.oauth_handler = SpotifyOAuth(username=USERNAME, client_id=SPOTIPY_CLIENT_ID, client_secret=SPOTIPY_CLIENT_SECRET, redirect_uri=SPOTIPY_REDIRECT_URI, 
-                         scope=permission_scopes, cache_path=f"./src/Files/.cache-{USERNAME}", open_browser=False)
+                         scope=PERMISSION_SCOPE, cache_path=f"./src/Files/.cache-{USERNAME}", open_browser=False)
         self.authenticated = False
 
         self.api_communicaton_queue = Queue()
@@ -25,6 +25,12 @@ class Controller:
         self.controller_to_lights_queue = Queue() # a queue so the controller can pass messages to spotify lights manager thread
         self.light_to_controller_queue = Queue() # a queue so spotify lights manager thread can pass messages to controller
         self.spotify_lights_kill_sentinel = object()
+
+        self.animation_controller = None
+        self.animation_thread = None
+        self.controller_to_animation_queue = Queue()
+        self.animation_to_controller_queue = Queue()
+        self.animation_kill_sentinel = object()
 
         self.current_command = None
 
@@ -53,12 +59,23 @@ class Controller:
                 if command['COMMAND'] == 'LIGHTS_OFF':
                     if self._spotify_lights_are_running():
                         self._kill_spotify_lights()
-                        self.current_command = command['COMMAND']
+                    if self._animation_is_running():
+                        self._kill_animation_thread()
+
                 if command['COMMAND'] == 'SPOTIFY_LIGHTS_ON':
+                    if self._animation_is_running():
+                        self._kill_animation_thread()
                     if not self._spotify_lights_are_running():
                         self._start_spotify_lights()
-                        self.current_command = command['COMMAND']
-                        
+
+                if command['COMMAND'] == 'ANIMATION_LIGHTS_ON':
+                    if self._spotify_lights_are_running():
+                        self._kill_spotify_lights()
+                    if not self._animation_is_running():
+                        self._start_animation_thread()
+                        print('starting animation')
+
+                self.current_command = command['COMMAND']
                 self.api_communicaton_queue.task_done()
 
 
@@ -66,11 +83,16 @@ class Controller:
             if not self.current_command:
                 if self.settings_handler.get_default_behaviour() == "SPOTIFY_LIGHTS" and self.authenticated and not self._spotify_lights_are_running():
                     self._start_spotify_lights()
+                elif self.settings_handler.get_default_behaviour() == "ANIMATION" and not self._animation_is_running():
+                    self._start_animation_thread()
                 elif self.settings_handler.get_default_behaviour() == "LIGHTS_OFF" and self._spotify_lights_are_running():
                     self._kill_spotify_lights()
-
+                    self._kill_animation_thread()
 
     def _start_spotify_lights(self):
+        if self._spotify_lights_are_running():
+            return
+        
         self.controller_to_lights_queue = Queue() # a queue so the controller can pass messages to spotify lights manager thread
         self.light_to_controller_queue = Queue() # a queue so spotify lights manager thread can pass messages to controller
         self.spotify_lights_thread = threading.Thread(target=manage, name="spotify_lights_thread", args=(False, self.settings_handler.get_base_color(), self.oauth_handler,
@@ -78,6 +100,9 @@ class Controller:
         self.spotify_lights_thread.start()
 
     def _kill_spotify_lights(self):
+        if not self._spotify_lights_are_running():
+            return
+
         self.controller_to_lights_queue.put(self.spotify_lights_kill_sentinel)
         self.controller_to_lights_queue.join() # wait for spotify lights to mark command as completed
         self.spotify_lights_thread.join() 
@@ -88,3 +113,29 @@ class Controller:
     def _spotify_lights_are_running(self):
         return self.spotify_lights_thread and self.spotify_lights_thread.is_alive()
             
+    def _start_animation_thread(self):
+        if self._animation_is_running():
+            return
+        
+        self.controller_to_animation_queue = Queue()
+        self.animation_to_controller_queue = Queue()
+        self.animation_controller = AnimationController(None, 0, self.controller_to_animation_queue, 
+                                                        self.animation_to_controller_queue, self.animation_kill_sentinel)
+        self.animation_thread = threading.Thread(target=self.animation_controller.run, name="animation_thread")
+        self.animation_thread.start()
+        
+    def _kill_animation_thread(self):
+        if not self._animation_is_running():
+            return
+
+        self.controller_to_animation_queue.put(self.animation_kill_sentinel)
+        self.animation_thread.join(timeout=10)
+
+        if self._animation_is_running():
+            raise Exception("Could Not Kill Animation Thread")
+        
+        self.animation_to_controller_queue = Queue()
+        self.controller_to_animation_queue = Queue()
+        
+    def _animation_is_running(self):
+        return self.animation_thread and self.animation_thread.is_alive() 
