@@ -60,12 +60,33 @@ class SettingsHandler():
 
     def update_default_behaviour(self, truth_value):
         settings = self._read_settings()
-        settings['LIGHTS_ON_AFTER_START_UP'] = truth_value
+        settings['DEFAULT_BEHAVIOUR'] = truth_value
         self._write_settings(settings)
 
     def get_default_behaviour(self):
         settings = self._read_settings()
         return settings['DEFAULT_BEHAVIOUR']
+    
+    def add_animation(self, animation_name):
+        settings = self._read_settings()
+        enabled_animations = settings['ANIMATIONS_LIST']
+        if animation_name in enabled_animations:
+            return
+        
+        enabled_animations.append(animation_name)
+        self._write_settings(settings)
+
+    def remove_animation(self, animation_name):
+        settings = self._read_settings()
+        enabled_animations = settings['ANIMATIONS_LIST']
+        if animation_name not in enabled_animations:
+            return
+        
+        enabled_animations.remove(animation_name)
+        self._write_settings(settings)
+
+    def get_animations(self):
+        return self._read_settings()['ANIMATIONS_LIST']
     
     def reset_settings(self):
         self._write_settings(DEFAULT_SETTINGS)

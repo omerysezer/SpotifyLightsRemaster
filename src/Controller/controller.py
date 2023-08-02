@@ -17,7 +17,7 @@ class Controller:
 
         self.api_communicaton_queue = Queue()
         self.api_kill_sentinel = object()
-        self.api = API(self.api_communicaton_queue, self.api_kill_sentinel)
+        self.api = API(self.api_communicaton_queue, self.api_kill_sentinel, self.settings_handler)
         self.api_thread = None
 
 
