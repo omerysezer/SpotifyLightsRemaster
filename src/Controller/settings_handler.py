@@ -67,22 +67,18 @@ class SettingsHandler():
         settings = self._read_settings()
         return settings['DEFAULT_BEHAVIOUR']
     
-    def add_animation(self, animation_name):
+    def update_enabled_animations(self, animation_names):
         settings = self._read_settings()
-        enabled_animations = settings['ANIMATIONS_LIST']
-        if animation_name in enabled_animations:
-            return
-        
-        enabled_animations.append(animation_name)
+        settings['ANIMATIONS_LIST'] = animation_names or []
         self._write_settings(settings)
 
-    def remove_animation(self, animation_name):
-        settings = self._read_settings()
-        enabled_animations = settings['ANIMATIONS_LIST']
-        if animation_name not in enabled_animations:
+    def handle_deleted_animations(self, deleted_animations):
+        if not deleted_animations:
             return
-        
-        enabled_animations.remove(animation_name)
+            
+        settings = self._read_settings()
+        settings['ANIMATIONS_LIST'] = [animation for animation in settings['ANIMATIONS_LIST'] if animation not in deleted_animations]
+        print(settings['ANIMATIONS_LIST'])
         self._write_settings(settings)
 
     def get_animations(self):

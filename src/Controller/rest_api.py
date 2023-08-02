@@ -4,6 +4,7 @@ from src.Files.credentials import USERNAME, SPOTIPY_CLIENT_ID, SPOTIPY_CLIENT_SE
     AWS_SECRET_KEY
 import random, string
 import os
+import threading
 
 permission_scopes = "user-modify-playback-state user-read-currently-playing user-read-playback-state"
 
@@ -15,10 +16,11 @@ from werkzeug.utils import secure_filename
 UPLOAD_FOLDER = './src/Animations/LightAnimations/'
 
 class API:
-    def __init__(self, communication_queue, kill_sentinel, settings_handler):
+    def __init__(self, communication_queue, kill_sentinel, settings_handler, settings_lock):
         self.communication_queue = communication_queue
         self.kill_sentinel = kill_sentinel # a dummy object which signals the class to kill the thread
         self.settings_handler = settings_handler
+        self.settings_lock = settings_lock
 
     def _allowed_file(self, filename):
         return '.' in filename and \
@@ -30,8 +32,13 @@ class API:
         @app.route('/')
         def send_html():
             animation_files = os.listdir(UPLOAD_FOLDER)
-            already_enabled_files = self.settings_handler.get_animations()
+            animation_files.sort(key=lambda file: os.path.getmtime(os.path.join(UPLOAD_FOLDER, file)))
             file_names = [name[:-3] for name in animation_files if self._allowed_file(name)]
+            
+            self.settings_lock.acquire()
+            already_enabled_files = self.settings_handler.get_animations()
+            self.settings_lock.release()
+            
             return render_template("index.html", fileNames=file_names, enabledFiles=already_enabled_files)
             
         @app.route('/login')
@@ -64,24 +71,47 @@ class API:
             self.communication_queue.join()
             return 'Done'
 
-        @app.route('/animation_files', methods=['GET', 'POST', 'DELETE'])
+        @app.route('/animation_files', methods=['GET', 'POST'])
         def upload_animation():
             if request.method == 'POST':
-                # check if the post request has the file part
-                if 'file' not in request.files:
-                    return Response(status=400)
-                file = request.files['file']
-                # If the user does not select a file, the browser submits an
-                # empty file without a filename.
-                if file.filename == '':
-                    # flash('No selected file')
-                    return Response(status=400)
-                if file and self._allowed_file(file.filename):
-                    filename = secure_filename(file.filename)
-                    file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-                    return Response(status=200)
-                else:
-                    return Response(status=500)
+                if request.form['action'] == 'upload':
+                    # check if the post request has the file part
+                    if 'file' not in request.files:
+                        return Response(status=400)
+                    file = request.files['file']
+                    # If the user does not select a file, the browser submits an
+                    # empty file without a filename.
+                    if file.filename == '':
+                        # flash('No selected file')
+                        return Response(status=400)
+                    if file and self._allowed_file(file.filename):
+                        try:
+                            filename = secure_filename(file.filename)
+                            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                            return Response(status=200)
+                        except:
+                            return Response(status=500)
+                    else:
+                        return Response(status=500)
+                elif request.form['action'] == 'select':
+                    selected_animations = request.form.getlist('selected_files')
+                    
+                    self.settings_lock.acquire()
+                    self.settings_handler.update_enabled_animations(selected_animations)
+                    self.settings_lock.release()
+                    
+                    return redirect('/')
+                elif request.form['action'] == 'delete':
+                    selected_animations = request.form.getlist('selected_files')
+                    for animation in selected_animations:
+                        path = os.path.join(UPLOAD_FOLDER, animation + '.py')
+                        os.remove(path)
+                    
+                    self.settings_lock.acquire()
+                    self.settings_handler.handle_deleted_animations(selected_animations)
+                    self.settings_lock.release()
+
+                    return redirect('/')
                 
 
 

@@ -51,7 +51,7 @@
     </div>
     <br/>
     
-    <form id="animation_form">
+    <form id="animation_form" action="/animation_files" method="post">
         <div class=container>
             <ul>
                 {% for fileName in fileNames %}
@@ -81,9 +81,27 @@
             method: 'POST',
             body: formData
         })
-        .then(response => response.text())
-        .then(data=>console.log(data))
-        .catch(error=>console.error("Error: ", error))
+        .then(response => {
+            response.text()
+            setTimeout(function(){
+              window.location.href = "/"
+            },
+            1000)
+        })
+        .then(data=> {
+            console.log(data)
+            setTimeout(function(){
+              window.location.href = "/"
+            },
+            1000)
+        })
+        .catch(error=> {
+            console.error("Error: ", error)
+            setTimeout(function(){
+              window.location.href = "/"
+            },
+            1000)
+        })
     }
     
     function upload_animation(){
@@ -97,6 +115,7 @@
         
         const formData = new FormData()
         formData.append('file', file)
+        formData.append('action', 'upload')
         
         fetch('/animation_files', {
             method: 'POST',
@@ -108,8 +127,18 @@
             else{
                 alert('There was an error uploading the file, please try again')
             }
+
+            setTimeout(function(){
+                window.location.href = "/"
+            },
+            1000)
         }).catch(error => {
             alert('There was an error uploading the file.')
+
+            setTimeout(function(){
+              window.location.href = "/"
+            },
+            1000)
         })
     }
 
