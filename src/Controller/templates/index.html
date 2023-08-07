@@ -29,29 +29,49 @@
         OMER'S ROOM LIGHTS
     </h1>
     
-    <label>
-        <input type="radio" id="LIGHTS_OFF" name="light_setting" value="LIGHTS_OFF">
-        <i>Lights Off</i>
-    </label>
+    <form id="light_setting" action="/light_setting" method="post">
+        <label>
+            <input type="radio" id="LIGHTS_OFF" name="light_setting" value="LIGHTS_OFF" {% if current_behaviour == "LIGHTS_OFF" %} checked {% endif %}>
+            <i>Lights Off {% if default_light_setting == "LIGHTS_OFF" %} (Default) {% endif %}
+                {% if current_behaviour == "LIGHTS_OFF" %} (Active) {% endif %}
+            </i>
+        </label>
+        <br/>
+        <label>
+            <input type="radio" id="SPOTIFY_LIGHTS_ON" name="light_setting" value="SPOTIFY_LIGHTS_ON" {% if current_behaviour == "SPOTIFY_LIGHTS_ON" %} checked {% endif %}>
+            <i>Spotify Lights On {% if default_light_setting == "SPOTIFY_LIGHTS_ON" %} (Default) {% endif %} 
+                {% if current_behaviour == "SPOTIFY_LIGHTS_ON" %} (Active) {% endif %} 
+            </i>
+        </label>
+        <br/>
+        <label>
+            <input type="radio" id="ANIMATION_LIGHTS_ON" name="light_setting" value="ANIMATION_LIGHTS_ON" {% if current_behaviour == "ANIMATION_LIGHTS_ON" %} checked {% endif %}>
+            <i>Animations On {% if default_light_setting == "ANIMATION_LIGHTS_ON" %} (Default) {% endif %}
+                {% if current_behaviour== "ANIMATION_LIGHTS_ON" %} (Active) {% endif %}
+            </i>
+        </label> 
+        <br/>
+        <label><input type="checkbox" id="make_setting_default" name="light_setting_cb" value="checked">Make This Setting Default Behaviour</label>
+        <br/>
+        <button type="submit">Submit</button>
+    </form>
+
+
     <br/>
-    <label>
-        <input type="radio" id="SPOTIFY_LIGHTS_ON" name="light_setting" value="SPOTIFY_LIGHTS_ON">
-        <i>Spotify Lights On</i>
-    </label>
-    <br/>
-    <label>
-        <input type="radio" id="ANIMATION_LIGHTS_ON" name="light_setting" value="ANIMATION_LIGHTS_ON">
-        <i>Animations On</i>
-    </label>
-    <br/>
+    
+    
     <div>
         <form id="uploadForm">
             <input type="file" id="fileInput" name="file" />
             <button type="button" onclick="upload_animation()">Upload</button>
         </form>    
     </div>
+
     <br/>
+
     <input type="range" min="0" max="100" value="{{ brightness }}" id="brightness" onchange="on_brightness_change()" oninput="show_slider_val()"><span>Brightness: </span><span id="range_val_display">{{ brightness }}%</span>
+    
+    <br/>
     <br/>
     <form id="animation_form" action="/animation_files">
         <div class=container>
@@ -87,21 +107,10 @@
             body: formData
         })
         .then(response => {
-            response.text()
-            setTimeout(function(){
-              window.location.href = "/"
-            },
-            1000)
-        })
-        .then(data=> {
-            console.log(data)
-            setTimeout(function(){
-              window.location.href = "/"
-            },
-            1000)
-        })
-        .catch(error=> {
-            console.error("Error: ", error)
+            alert(response.ok)
+            if(!response.ok){
+                alert(response.status)
+            }
             setTimeout(function(){
               window.location.href = "/"
             },
@@ -144,37 +153,6 @@
               window.location.href = "/"
             },
             1000)
-        })
-    }
-
-    function on_radio_click(){
-        setting_to_send = null
-
-        if(document.getElementById("LIGHTS_OFF").checked){
-
-            document.getElementById("SPOTIFY_LIGHTS_ON").checked = false
-            document.getElementById("ANIMATION_LIGHTS_ON").checked = false
-            setting_to_send = "LIGHTS_OFF"    
-        }
-        else if(document.getElementById("SPOTIFY_LIGHTS_ON").checked){
-
-            document.getElementById("LIGHTS_OFF").checked = false
-            document.getElementById("ANIMATION_LIGHTS_ON").checked = false
-            setting_to_send = "SPOTIFY_LIGHTS_ON"
-        }
-        else if(document.getElementById("ANIMATION_LIGHTS_ON").checked){
-
-            document.getElementById("LIGHTS_OFF").checked = false
-            document.getElementById("SPOTIFY_LIGHTS_ON").checked = false
-            setting_to_send = "ANIMATION_LIGHTS_ON"
-        }
-
-        fetch("http://192.168.1.80:9090/light_setting", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ light_setting: setting_to_send })
         })
     }
     

@@ -66,7 +66,7 @@ class SettingsHandler():
         return tuple(settings['GIT_COMMIT'])
 
     def update_default_behaviour(self, default_behaviour):
-        if default_behaviour not in ['LIGHTS_OFF', 'SPOTIFY_LIGHTS_ON', 'ANIMATIONS_ON']:
+        if default_behaviour not in ['LIGHTS_OFF', 'SPOTIFY_LIGHTS_ON', 'ANIMATION_LIGHTS_ON']:
             raise Exception('Unsupported behaviour')
         
         settings = self._read_settings()

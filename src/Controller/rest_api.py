@@ -24,6 +24,8 @@ class API:
         self.settings_handler = settings_handler
         self.settings_lock = settings_lock
 
+        self.current_behaviour = self.settings_handler.get_default_behaviour()
+
     def _allowed_file(self, filename):
         return '.' in filename and \
             filename.rsplit('.', 1)[1].lower() in ['py']
@@ -41,9 +43,11 @@ class API:
             animation_duration = self.settings_handler.get_animation_duration()
             brightness = self.settings_handler.get_brightness()
             already_enabled_files = self.settings_handler.get_animations()
+            default_behaviour = self.settings_handler.get_default_behaviour()
             self.settings_lock.release()
             
-            return render_template("index.html", fileNames=file_names, enabledFiles=already_enabled_files, duration=animation_duration, brightness=brightness)
+            return render_template("index.html", fileNames=file_names, enabledFiles=already_enabled_files, duration=animation_duration, 
+                                    brightness=brightness, default_light_setting=default_behaviour, current_behaviour=self.current_behaviour)
             
         @app.route('/login')
         def handle_spotify_auth_request():
@@ -63,16 +67,19 @@ class API:
             return redirect("/")
         
         @app.route('/light_setting', methods=['POST'])
-        def turn_off_lights():
-            data = request.get_json()['light_setting']
-            if data == "LIGHTS_OFF":
-                self.communication_queue.put({'COMMAND': 'LIGHTS_OFF'})
-            elif data == "SPOTIFY_LIGHTS_ON":
-                self.communication_queue.put({'COMMAND': 'SPOTIFY_LIGHTS_ON'})
-            elif data == "ANIMATION_LIGHTS_ON":
-                self.communication_queue.put({'COMMAND': 'ANIMATION_LIGHTS_ON'})
-            self.communication_queue.join()
-            return 'Done'
+        def light_setting():
+            setting = request.form.get('light_setting')
+            make_setting_default = request.form.get('light_setting_cb')
+            if make_setting_default:
+                self.settings_lock.acquire()
+                self.settings_handler.update_default_behaviour(setting)
+                self.settings_lock.release()
+            else:
+                self.communication_queue.put({'COMMAND': setting})
+                self.communication_queue.join()
+                self.current_behaviour = setting
+
+            return redirect("/")
 
         @app.route('/brightness', methods=['POST'])
         def update_brightness():
@@ -140,17 +147,20 @@ class API:
                 if args.get('action') == 'download':
                     selected_animations = args.getlist('selected_files')
                     existing_animation_files = os.listdir(UPLOAD_FOLDER)
-
                     existing_animation_names = [name[:-3] for name in existing_animation_files if self._allowed_file(name)]
+
+    
+                    print("exisitng: ", selected_animations)
+                    if not existing_animation_names:
+                        return "NO_FILES_AVAILABLE", 400
+                    
+                    if not selected_animations:
+                        return "NO_FILE_SELECTED", 400
 
                     for animation in selected_animations:
                         if animation not in existing_animation_names:
-                            raise Exception('File Not Found')
+                            return f"FILE_NOT_FOUND: {animation}", 500
                     
-                    zip_path = './src/Controller/temp_files/selected_animations.zip'
-                    for file in os.path.listdir('./src/Controller/temp_files/'):
-                        os.remove(file)
-                        
                     with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipped_folder:
                         for animation in selected_animations:
                             zipped_folder.write(UPLOAD_FOLDER + '/' + animation + '.py', arcname=animation + '.py')

@@ -62,14 +62,12 @@ class Controller:
                         self._kill_spotify_lights()
                     if self._animation_is_running():
                         self._kill_animation_thread()
-
-                if command['COMMAND'] == 'SPOTIFY_LIGHTS_ON':
+                elif command['COMMAND'] == 'SPOTIFY_LIGHTS_ON':
                     if self._animation_is_running():
                         self._kill_animation_thread()
                     if not self._spotify_lights_are_running():
                         self._start_spotify_lights()
-
-                if command['COMMAND'] == 'ANIMATION_LIGHTS_ON':
+                elif command['COMMAND'] == 'ANIMATION_LIGHTS_ON':
                     if self._spotify_lights_are_running():
                         self._kill_spotify_lights()
                     if not self._animation_is_running():
