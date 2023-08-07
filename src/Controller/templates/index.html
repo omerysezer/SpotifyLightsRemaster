@@ -51,7 +51,7 @@
     </div>
     <br/>
     
-    <form id="animation_form" action="/animation_files" method="post">
+    <form id="animation_form" action="/animation_files">
         <div class=container>
             <ul>
                 {% for fileName in fileNames %}
@@ -63,9 +63,10 @@
                 {% endfor %}
             </ul>
         </div>
-        <button type="submit" name="action" value="select">Display</button>
-        <button type="submit" name="action" value="delete">Delete</button>
-        <button type="submit" name="action" value="download">Download</button>
+        <input type="number" name="animation_time" value="10">
+        <button type="submit" name="action" value="select" method="post">Select</button>
+        <button type="submit" name="action" value="delete" method="post">Delete</button>
+        <button type="submit" name="action" value="download" method="get">Download</button>
     </form>    
 </body>
 </html>

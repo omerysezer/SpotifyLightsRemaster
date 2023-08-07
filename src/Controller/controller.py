@@ -94,6 +94,8 @@ class Controller:
                     self._kill_spotify_lights()
                     self._kill_animation_thread()
 
+        sleep(.1)
+
     def _start_spotify_lights(self):
         if self._spotify_lights_are_running():
             return

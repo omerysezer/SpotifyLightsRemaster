@@ -5,11 +5,13 @@ from src.Files.credentials import USERNAME, SPOTIPY_CLIENT_ID, SPOTIPY_CLIENT_SE
 import random, string
 import os
 import threading
+import zipfile
+import shutil
 
 permission_scopes = "user-modify-playback-state user-read-currently-playing user-read-playback-state"
 
 
-from flask import Flask, redirect, request, send_from_directory, current_app, Response, render_template
+from flask import Flask, redirect, request, send_from_directory, current_app, Response, render_template, send_file
 import threading
 from werkzeug.utils import secure_filename
 
@@ -95,7 +97,7 @@ class API:
                         return Response(status=500)
                 elif request.form['action'] == 'select':
                     selected_animations = request.form.getlist('selected_files')
-                    
+                    animation_durations = request.form.get('animation_time')
                     self.settings_lock.acquire()
                     self.settings_handler.update_enabled_animations(selected_animations)
                     self.settings_lock.release()
@@ -112,7 +114,33 @@ class API:
                     self.settings_lock.release()
 
                     return redirect('/')
-                
+            elif request.method == 'GET':
+                args = request.args
+                if args.get('action') == 'download':
+                    selected_animations = args.getlist('selected_files')
+                    existing_animation_files = os.listdir(UPLOAD_FOLDER)
+
+                    existing_animation_names = [name[:-3] for name in existing_animation_files if self._allowed_file(name)]
+
+                    for animation in selected_animations:
+                        if animation not in existing_animation_names:
+                            raise Exception('File Not Found')
+                    
+                    zip_path = './src/Controller/temp_files/selected_animations.zip'
+                    for file in os.path.listdir('./src/Controller/temp_files/'):
+                        os.remove(file)
+                        
+                    with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipped_folder:
+                        for animation in selected_animations:
+                            zipped_folder.write(UPLOAD_FOLDER + '/' + animation + '.py', arcname=animation + '.py')
+                        zipped_folder.close()
+
+                    # hack because send_file doesnt like absolute paths
+                    zip_path = 'temp_files/selected_animations.zip'
+                    return send_file(zip_path, mimetype='zip', download_name='animations.zip', as_attachment=True)
+                else:
+                    print('bye')
+                    return Response(status=200)
 
 
 

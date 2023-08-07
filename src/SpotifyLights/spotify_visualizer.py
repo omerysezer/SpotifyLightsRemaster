@@ -124,7 +124,7 @@ class SpotifyVisualizer:
         spotify_response = None
         while not spotify_response:
             spotify_response = self.sp_sync.current_user_playing_track()
-            time.sleep(0.5)
+            time.sleep(0.1)
         track_progress = spotify_response["progress_ms"] / 1000
         text = "Syncing track to position: {}. \r".format(track_progress)
         sys.stdout.write(SpotifyVisualizer._make_text_effect(text, ["green", "bold"]))
@@ -189,6 +189,7 @@ class SpotifyVisualizer:
             except:
                 text = "Error occurred while checking if playback is paused...retrying in {} seconds.".format(wait)
                 print(SpotifyVisualizer._make_text_effect(text, ["red", "bold"]))
+            time.sleep(wait)
 
     def _continue_checking_if_skip(self, wait=0.33):
         """Continuously checks if the user's playing track has changed. Called asynchronously (worker thread).
