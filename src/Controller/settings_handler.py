@@ -2,12 +2,17 @@ import json
 import os
 
 DEFAULT_SETTINGS = {
-    'DEFAULT_BEHAVIOUR': True,
-    'BASE_RGB': (255, 255, 255),
-    'ANIMATIONS_LIST': [],
-    'ANIMATION_DURATION': 10,
-    'GIT_BRANCH': 'master',
-    'GIT_COMMIT_ID': 'dd1490f'
+    "DEFAULT_BEHAVIOUR": "SPOTIFY_LIGHTS",
+    "BASE_RGB": [
+        255,
+        255,
+        255
+    ],
+    "ANIMATIONS_LIST": [],
+    "ANIMATION_DURATION": 10,
+    "BRIGHTNESS": 50,
+    "GIT_BRANCH": "master",
+    "GIT_COMMIT_ID": "dd1490f"
 }
 
 class SettingsHandler():
@@ -96,6 +101,14 @@ class SettingsHandler():
     
     def get_animation_duration(self):
         return self._read_settings()['ANIMATION_DURATION']
+    
+    def update_brightness(self, brightness):
+        settings = self._read_settings()
+        settings['BRIGHTNESS'] = brightness
+        self._write_settings(settings)
         
+    def get_brightness(self):
+        return self._read_settings()['BRIGHTNESS']
+
     def reset_settings(self):
         self._write_settings(DEFAULT_SETTINGS)

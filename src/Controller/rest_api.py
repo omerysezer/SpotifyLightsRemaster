@@ -36,13 +36,14 @@ class API:
             animation_files = os.listdir(UPLOAD_FOLDER)
             animation_files.sort(key=lambda file: os.path.getmtime(os.path.join(UPLOAD_FOLDER, file)))
             file_names = [name[:-3] for name in animation_files if self._allowed_file(name)]
-            animation_duration = self.settings_handler.get_animation_duration()
 
             self.settings_lock.acquire()
+            animation_duration = self.settings_handler.get_animation_duration()
+            brightness = self.settings_handler.get_brightness()
             already_enabled_files = self.settings_handler.get_animations()
             self.settings_lock.release()
             
-            return render_template("index.html", fileNames=file_names, enabledFiles=already_enabled_files, duration=animation_duration)
+            return render_template("index.html", fileNames=file_names, enabledFiles=already_enabled_files, duration=animation_duration, brightness=brightness)
             
         @app.route('/login')
         def handle_spotify_auth_request():
@@ -64,7 +65,6 @@ class API:
         @app.route('/light_setting', methods=['POST'])
         def turn_off_lights():
             data = request.get_json()['light_setting']
-
             if data == "LIGHTS_OFF":
                 self.communication_queue.put({'COMMAND': 'LIGHTS_OFF'})
             elif data == "SPOTIFY_LIGHTS_ON":
@@ -73,6 +73,14 @@ class API:
                 self.communication_queue.put({'COMMAND': 'ANIMATION_LIGHTS_ON'})
             self.communication_queue.join()
             return 'Done'
+
+        @app.route('/brightness', methods=['POST'])
+        def update_brightness():
+            brightness = request.get_json()['brightness']
+            self.settings_lock.acquire()
+            self.settings_handler.update_brightness(int(brightness))
+            self.settings_lock.release()
+            return Response(status=200)
 
         @app.route('/animation_files', methods=['GET', 'POST'])
         def upload_animation():

@@ -43,6 +43,7 @@
         <input type="radio" id="ANIMATION_LIGHTS_ON" name="light_setting" value="ANIMATION_LIGHTS_ON">
         <i>Animations On</i>
     </label>
+    <br/>
     <div>
         <form id="uploadForm">
             <input type="file" id="fileInput" name="file" />
@@ -50,7 +51,8 @@
         </form>    
     </div>
     <br/>
-    
+    <input type="range" min="0" max="100" value="{{ brightness }}" id="brightness" onchange="on_brightness_change()" oninput="show_slider_val()"><span>Brightness: </span><span id="range_val_display">{{ brightness }}%</span>
+    <br/>
     <form id="animation_form" action="/animation_files">
         <div class=container>
             <button type="button" name="dumb" id="select_deselect_all" value="select" onclick="check_uncheck_all_boxes()">Select All</button>
@@ -170,9 +172,9 @@
         fetch("http://192.168.1.80:9090/light_setting", {
             method: "POST",
             headers: {
-                "Content-Type": "application/json", // Set the appropriate content type for your data
+                "Content-Type": "application/json",
             },
-            body: JSON.stringify({ light_setting: setting_to_send }), // Convert your data to JSON if needed
+            body: JSON.stringify({ light_setting: setting_to_send })
         })
     }
     
@@ -212,4 +214,22 @@
         all_boxes_checked()
     }
     all_boxes_checked()
+
+    function on_brightness_change(){
+        brightness_slider = document.getElementById('brightness')
+        fetch("http://192.168.1.80:9090/brightness", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ "brightness": document.getElementById('brightness').value })
+        })
+    }
+
+    function show_slider_val(){
+        brightness_slider = document.getElementById('brightness')
+        brightness_display = document.getElementById('range_val_display')
+        
+        brightness_display.innerHTML = brightness_slider.value + '%'
+    }
 </script>
