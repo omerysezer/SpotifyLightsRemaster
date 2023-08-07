@@ -36,12 +36,13 @@ class API:
             animation_files = os.listdir(UPLOAD_FOLDER)
             animation_files.sort(key=lambda file: os.path.getmtime(os.path.join(UPLOAD_FOLDER, file)))
             file_names = [name[:-3] for name in animation_files if self._allowed_file(name)]
-            
+            animation_duration = self.settings_handler.get_animation_duration()
+
             self.settings_lock.acquire()
             already_enabled_files = self.settings_handler.get_animations()
             self.settings_lock.release()
             
-            return render_template("index.html", fileNames=file_names, enabledFiles=already_enabled_files)
+            return render_template("index.html", fileNames=file_names, enabledFiles=already_enabled_files, duration=animation_duration)
             
         @app.route('/login')
         def handle_spotify_auth_request():
@@ -97,9 +98,14 @@ class API:
                         return Response(status=500)
                 elif request.form['action'] == 'select':
                     selected_animations = request.form.getlist('selected_files')
-                    animation_durations = request.form.get('animation_time')
+                    animation_duration = round(float(request.form.get('animation_duration')), 2)
+
+                    if animation_duration.is_integer():
+                        animation_duration = int(animation_duration)
+
                     self.settings_lock.acquire()
                     self.settings_handler.update_enabled_animations(selected_animations)
+                    self.settings_handler.update_animation_duration(animation_duration)
                     self.settings_lock.release()
                     
                     return redirect('/')
@@ -111,6 +117,13 @@ class API:
                     
                     self.settings_lock.acquire()
                     self.settings_handler.handle_deleted_animations(selected_animations)
+                    self.settings_lock.release()
+
+                    return redirect('/')
+                elif request.form['action'] == 'set_duration':
+                    duration = request.form.get('duration')
+                    self.settings_lock.acquire()
+                    self.settings_handler.update_animation_duration(duration)
                     self.settings_lock.release()
 
                     return redirect('/')
@@ -139,7 +152,6 @@ class API:
                     zip_path = 'temp_files/selected_animations.zip'
                     return send_file(zip_path, mimetype='zip', download_name='animations.zip', as_attachment=True)
                 else:
-                    print('bye')
                     return Response(status=200)
 
 

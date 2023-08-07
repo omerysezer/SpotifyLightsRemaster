@@ -53,21 +53,23 @@
     
     <form id="animation_form" action="/animation_files">
         <div class=container>
-            <ul>
+            <button type="button" name="dumb" id="select_deselect_all" value="select" onclick="check_uncheck_all_boxes()">Select All</button>
+            <ul id="animations_checkboxes">
                 {% for fileName in fileNames %}
                     <li>
                         <input type="checkbox" name="selected_files" value="{{ fileName }}" id="fileName_{{ loop.index }}"
-                        {% if fileName in enabledFiles %} checked {% endif %}> 
+                        {% if fileName in enabledFiles %} checked {% endif %} onclick="all_boxes_checked()"> 
                         <label for="fileName_{{ loop.index }}">{{ fileName }}</label>  
                     </li>
                 {% endfor %}
             </ul>
         </div>
-        <input type="number" name="animation_time" value="10">
-        <button type="submit" name="action" value="select" method="post">Select</button>
-        <button type="submit" name="action" value="delete" method="post">Delete</button>
-        <button type="submit" name="action" value="download" method="get">Download</button>
-    </form>    
+        <button type="submit" name="action" value="select" formmethod="post">Select Animations / Set Duration</button>
+        <button type="submit" name="action" value="delete" formmethod="post">Delete Animations</button>
+        <button type="submit" name="action" value="download" formmethod="get">Download Animation Files</button>
+        <br/>
+        <input type="number" name="animation_duration" value="{{ duration }}" step="0.01"><span> Animation Duration (sec)</span>
+    </form>
 </body>
 </html>
 
@@ -178,4 +180,36 @@
     for(let i = 0; i < buttons.length; i++){
         buttons[i].addEventListener("click", on_radio_click)
     }
+
+    function all_boxes_checked(){
+        const checkbox_elements = document.getElementById("animations_checkboxes").getElementsByTagName("input")
+        let all_checked = true
+        for(let i = 0; i < checkbox_elements.length; i++){
+            all_checked = all_checked && checkbox_elements[i].checked
+        }
+
+        select_deselect_all_button = document.getElementById("select_deselect_all")
+        if(all_checked){
+            select_deselect_all_button.innerHTML = "Deselect All"
+            select_deselect_all_button.value = "deselect"
+        }
+        else{
+            select_deselect_all_button.innerHTML = "Select All"
+            select_deselect_all_button.value = "select"
+        }
+    }
+
+    function check_uncheck_all_boxes(){
+        const checkbox_elements = document.getElementById("animations_checkboxes").getElementsByTagName("input")
+        const select_deselect_all_button = document.getElementById("select_deselect_all")
+
+        const val_to_set_checkboxes_to = select_deselect_all_button.value == "select"
+        
+        for(let i = 0; i < checkbox_elements.length; i++){
+            checkbox_elements[i].checked = val_to_set_checkboxes_to
+        }
+
+        all_boxes_checked()
+    }
+    all_boxes_checked()
 </script>

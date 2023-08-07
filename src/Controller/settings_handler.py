@@ -2,8 +2,10 @@ import json
 import os
 
 DEFAULT_SETTINGS = {
-    'LIGHTS_ON_AFTER_START_UP': True,
+    'DEFAULT_BEHAVIOUR': True,
     'BASE_RGB': (255, 255, 255),
+    'ANIMATIONS_LIST': [],
+    'ANIMATION_DURATION': 10,
     'GIT_BRANCH': 'master',
     'GIT_COMMIT_ID': 'dd1490f'
 }
@@ -58,9 +60,12 @@ class SettingsHandler():
         settings = self._read_settings()
         return tuple(settings['GIT_COMMIT'])
 
-    def update_default_behaviour(self, truth_value):
+    def update_default_behaviour(self, default_behaviour):
+        if default_behaviour not in ['LIGHTS_OFF', 'SPOTIFY_LIGHTS_ON', 'ANIMATIONS_ON']:
+            raise Exception('Unsupported behaviour')
+        
         settings = self._read_settings()
-        settings['DEFAULT_BEHAVIOUR'] = truth_value
+        settings['DEFAULT_BEHAVIOUR'] = default_behaviour
         self._write_settings(settings)
 
     def get_default_behaviour(self):
@@ -83,6 +88,14 @@ class SettingsHandler():
 
     def get_animations(self):
         return self._read_settings()['ANIMATIONS_LIST']
+
+    def update_animation_duration(self, duration):
+        settings = self._read_settings()
+        settings['ANIMATION_DURATION'] = duration
+        self._write_settings(settings)
     
+    def get_animation_duration(self):
+        return self._read_settings()['ANIMATION_DURATION']
+        
     def reset_settings(self):
         self._write_settings(DEFAULT_SETTINGS)

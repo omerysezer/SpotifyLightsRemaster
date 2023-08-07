@@ -6,6 +6,7 @@
         255
     ],
     "ANIMATIONS_LIST": [],
+    "ANIMATION_DURATION": 10,
     "GIT_BRANCH": "master",
     "GIT_COMMIT_ID": "dd1490f"
 }
