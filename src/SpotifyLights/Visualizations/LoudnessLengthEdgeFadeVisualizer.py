@@ -38,7 +38,7 @@ class LoudnessLengthEdgeFadeVisualizer(Visualizer):
 
         # Set middle pixel to start_color (when an odd number of pixels are lit, segments don't cover the middle pixel)
         start_r, start_g, start_b = start_color
-        self.strip.set_pixel(mid, start_r, start_g, start_b, brightness)
+        self.strip.set_pixel(mid, start_r, start_g, start_b)
 
         # Segment strip into 12 zones (1 for each of the pitch keys) and set color based on corresponding pitch strength
         for i in range(0, 12):
@@ -52,17 +52,17 @@ class LoudnessLengthEdgeFadeVisualizer(Visualizer):
             zone_r, zone_g, zone_b = self._calculate_zone_color(pitch_strength, start_color, self.secondary_color)
 
             # Fade the strength of the RGB values near the ends of the zone to produce a nice gradient effect
-            for j in range(start, end + 1):
+            for j in range(start, end):
                 color_strength = (1.0 + (j - start)) / (1.0 + (segment_mid - start))
                 if color_strength > 1.0:
                     color_strength = 2.0 - color_strength
                 faded_r, faded_g, faded_b = LoudnessLengthEdgeFadeVisualizer\
                     .apply_gradient_fade((zone_r, zone_g, zone_b), color_strength, start_color)
-                self.strip.set_pixel(j, faded_r, faded_g, faded_b, brightness)
+                self.strip.set_pixel(j, faded_r, faded_g, faded_b)
 
         # Make sure to turn off pixels that are not in use and push visualization to the strip
-        self.strip.fill(0, lower, 0, 0, 0, 0)
-        self.strip.fill(upper, self.num_pixels, 0, 0, 0, 0)
+        self.strip.fill(0, lower, 0, 0, 0)
+        self.strip.fill(upper, self.num_pixels, 0, 0, 0)
         self.strip.show()
 
     def _calculate_zone_color(self, pitch_strength, start_color, end_color):

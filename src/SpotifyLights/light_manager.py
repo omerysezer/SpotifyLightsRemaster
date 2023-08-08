@@ -19,7 +19,7 @@ def _init_visualizer(dev_mode, n_pixels, base_color):
         visualization_device = VirtualLEDStrip()
     else:
         from src.SpotifyLights.led_strip import LED_STRIP
-        visualization_device = LED_STRIP(bus_method='bitbang', num_led=n_pixels, global_brightness=23, mosi=10, sclk=11, order='rgb')
+        visualization_device = LED_STRIP(num_led=n_pixels, strip_type='dotstar')
 
     visualizer = LoudnessLengthEdgeFadeVisualizer(visualization_device, n_pixels, base_color)
     loading_animator = LoadingAnimator(visualization_device, n_pixels)

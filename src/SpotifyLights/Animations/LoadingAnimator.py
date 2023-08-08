@@ -14,7 +14,7 @@ class LoadingAnimator(Animator):
         self.start_pixel = self.start_pixel + max(1, int(self.frame_rate * self.num_pixels))
         end_pixel = self.start_pixel + (self.num_pixels // 10)
 
-        self.strip.fill(0, self.num_pixels, 0, 0, 0, 0) # Clear strip
+        self.strip.fill_all(0, 0, 0) # Clear strip
         for idx in range(self.start_pixel, end_pixel):
-            self.strip.set_pixel(idx % self.num_pixels, 255, 255, 255, 100)
+            self.strip.set_pixel(idx % self.num_pixels, 255, 255, 255)
         self.strip.show()

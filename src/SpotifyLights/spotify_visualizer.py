@@ -124,7 +124,7 @@ class SpotifyVisualizer:
         spotify_response = None
         while not spotify_response:
             spotify_response = self.sp_sync.current_user_playing_track()
-            time.sleep(0.1)
+            time.sleep(0.05)
         track_progress = spotify_response["progress_ms"] / 1000
         text = "Syncing track to position: {}. \r".format(track_progress)
         sys.stdout.write(SpotifyVisualizer._make_text_effect(text, ["green", "bold"]))
@@ -203,10 +203,12 @@ class SpotifyVisualizer:
         track = self.track
         while track["item"]["id"] == self.track["item"]["id"]:
             if self.song_ended:
+                print('hi')
                 text = "Killing skip checking thread. (FORCE)"
                 print(SpotifyVisualizer._make_text_effect(text, ["red", "bold"]))
                 exit(0)
             try:
+                print('bye')
                 spotify_response = self.sp_skip.current_user_playing_track()
                 assert(spotify_response is not None)
                 track = spotify_response
@@ -218,7 +220,7 @@ class SpotifyVisualizer:
         text = "A skip has occurred."
         print(SpotifyVisualizer._make_text_effect(text, ["blue", "bold"]))
 
-    def _continue_loading_data(self, wait=0.01):
+    def _continue_loading_data(self, wait=0.5):
         """Continuously loads and prepares chunks of data. Called asynchronously (worker thread).
 
         Args:
@@ -306,7 +308,7 @@ class SpotifyVisualizer:
         self.buffer_lock.release()
         return to_return
 
-    def _load_track_data(self, chunk_length=30):
+    def _load_track_data(self, chunk_length=12):
         """Obtain track data from the Spotify API and run necessary analysis to generate data needed for visualization.
 
         Each call to this function analyzes the next chunk_length seconds of track data and produces the appropriate
@@ -475,6 +477,7 @@ class SpotifyVisualizer:
                     self.loading_animator.animate()
             # Unexpected error...retry
             except Exception as e:
+                print(e)
                 text = f"Unexpected error in visualization thread: {e} \nRetrying..."
                 print(SpotifyVisualizer._make_text_effect(text, ["red", "bold"]))
 

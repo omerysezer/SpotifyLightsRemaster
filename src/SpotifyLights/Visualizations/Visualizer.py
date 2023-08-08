@@ -56,7 +56,7 @@ class Visualizer:
         return self.strip
 
     def reset(self):
-        self.strip.fill(0, self.num_pixels, 0, 0, 0, 0)
+        self.strip.fill(0, self.num_pixels, 0, 0, 0)
         self.strip.show()
 
     def set_primary_color(self, color):
