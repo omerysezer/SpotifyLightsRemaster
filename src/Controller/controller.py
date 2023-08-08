@@ -84,9 +84,9 @@ class Controller:
                 default_behaviour = self.settings_handler.get_default_behaviour() 
                 self.settings_lock.release()
 
-                if default_behaviour == "SPOTIFY_LIGHTS" and self.authenticated and not self._spotify_lights_are_running():
+                if default_behaviour == "SPOTIFY_LIGHTS_ON" and self.authenticated and not self._spotify_lights_are_running():
                     self._start_spotify_lights()
-                elif default_behaviour == "ANIMATION" and not self._animation_is_running():
+                elif default_behaviour == "ANIMATION_LIGHTS_ON" and not self._animation_is_running():
                     self._start_animation_thread()
                 elif default_behaviour == "LIGHTS_OFF" and self._spotify_lights_are_running():
                     self._kill_spotify_lights()

@@ -2,7 +2,7 @@ import json
 import os
 
 DEFAULT_SETTINGS = {
-    "DEFAULT_BEHAVIOUR": "SPOTIFY_LIGHTS",
+    "DEFAULT_BEHAVIOUR": "SPOTIFY_LIGHTS_ON",
     "BASE_RGB": [
         255,
         255,
