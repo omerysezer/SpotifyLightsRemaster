@@ -201,7 +201,7 @@ class SpotifyVisualizer:
             wait (float): the amount of time in seconds to wait between each check.
         """
         track = self.track
-        while track["item"]["id"] == self.track["item"]["id"]:
+        while self.track and track["item"]["id"] == self.track["item"]["id"]:
             if self.song_ended:
                 print('hi')
                 text = "Killing skip checking thread. (FORCE)"
