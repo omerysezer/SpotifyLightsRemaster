@@ -11,6 +11,7 @@ import threading
 import time
 from src.SpotifyLights.Visualizations.LoudnessLengthEdgeFadeVisualizer import LoudnessLengthEdgeFadeVisualizer
 from src.SpotifyLights.Visualizations.LoudnessLengthWithPitchVisualizer import LoudnessLengthWithPitchVisualizer
+from queue import Queue
 
 __author__ = "Yusuf Sezer"
 
@@ -107,9 +108,17 @@ class SpotifyVisualizer:
         """
         text = "Waiting for an active Spotify track to start visualization."
         print(SpotifyVisualizer._make_text_effect(text, ["green", "bold"]))
-        while not self.track:
+        while not self.track and not self.should_terminate:
             self.track = self.sp_gen.current_user_playing_track()
+
+            if not self.track or not self.track["item"]:
+                self.track = None
+                
             time.sleep(1)
+        
+        if self.should_terminate:
+            return
+
         track_name = self.track["item"]["name"]
         artists = ', '.join((artist["name"] for artist in self.track["item"]["artists"]))
         text = "Loaded track: {} by {}.".format(track_name, artists)
@@ -145,20 +154,22 @@ class SpotifyVisualizer:
             self._reset()
             self.get_track()
 
-            # Start threads and wait for them to exit
-            threads = [
-                threading.Thread(target=self._visualize, name="[VISUALIZER] visualize_thread"),
-                threading.Thread(target=self._continue_loading_data, name="[VISUALIZER] data_load_thread"),
-                threading.Thread(target=self._continue_syncing, name="[VISUALIZER] sync_thread"),
-                threading.Thread(target=self._continue_checking_if_skip, name="[VISUALIZER] skipping_thread"),
-                threading.Thread(target=self._continue_checking_if_paused, name="[VISUALIZER] pause_thread")
-            ]
-            for thread in threads:
-                thread.start()
-            text = "Started visualization."
-            print(SpotifyVisualizer._make_text_effect(text, ["green"]))
-            for thread in threads:
-                thread.join()
+            # checking again because should_terminate could have changes while waiting for get_track
+            if not self.should_terminate:
+                # Start threads and wait for them to exit
+                threads = [
+                    threading.Thread(target=self._visualize, name="[VISUALIZER] visualize_thread"),
+                    threading.Thread(target=self._continue_loading_data, name="[VISUALIZER] data_load_thread"),
+                    threading.Thread(target=self._continue_syncing, name="[VISUALIZER] sync_thread"),
+                    threading.Thread(target=self._continue_checking_if_skip, name="[VISUALIZER] skipping_thread"),
+                    threading.Thread(target=self._continue_checking_if_paused, name="[VISUALIZER] pause_thread")
+                ]
+                for thread in threads:
+                    thread.start()
+                text = "Started visualization."
+                print(SpotifyVisualizer._make_text_effect(text, ["green"]))
+                for thread in threads:
+                    thread.join()
 
             self.visualizer.reset()
             text = "Visualization finished."
@@ -190,6 +201,8 @@ class SpotifyVisualizer:
                 text = "Error occurred while checking if playback is paused...retrying in {} seconds.".format(wait)
                 print(SpotifyVisualizer._make_text_effect(text, ["red", "bold"]))
             time.sleep(wait)
+        text = "Killing Pause Checking Thread"
+        print(SpotifyVisualizer._make_text_effect(text, ["red", "bold"]))
 
     def _continue_checking_if_skip(self, wait=0.33):
         """Continuously checks if the user's playing track has changed. Called asynchronously (worker thread).
@@ -201,14 +214,13 @@ class SpotifyVisualizer:
             wait (float): the amount of time in seconds to wait between each check.
         """
         track = self.track
-        while self.track and track["item"]["id"] == self.track["item"]["id"]:
+        while track and track["item"] and self.track and self.track["item"] and  track["item"]["id"] == self.track["item"]["id"]:
             if self.song_ended:
                 print('hi')
                 text = "Killing skip checking thread. (FORCE)"
                 print(SpotifyVisualizer._make_text_effect(text, ["red", "bold"]))
                 exit(0)
             try:
-                print('bye')
                 spotify_response = self.sp_skip.current_user_playing_track()
                 assert(spotify_response is not None)
                 track = spotify_response
@@ -216,6 +228,7 @@ class SpotifyVisualizer:
                 text = "Error occurred while checking if track has changed...retrying in {} seconds.".format(wait)
                 print(SpotifyVisualizer._make_text_effect(text, ["red", "bold"]))
             time.sleep(wait)
+
         self.song_ended = True
         text = "A skip has occurred."
         print(SpotifyVisualizer._make_text_effect(text, ["blue", "bold"]))
