@@ -15,10 +15,10 @@ logging.basicConfig(level=logging.WARNING)
 
 def _init_visualizer(dev_mode, n_pixels, base_color):
     if dev_mode:
-        from src.SpotifyLights.virtual_led_strip import VirtualLEDStrip
+        from src.led_strips.virtual_led_strip import VirtualLEDStrip
         visualization_device = VirtualLEDStrip()
     else:
-        from src.SpotifyLights.led_strip import LED_STRIP
+        from src.led_strips.led_strip import LED_STRIP
         visualization_device = LED_STRIP(num_led=n_pixels, strip_type='dotstar')
 
     visualizer = LoudnessLengthEdgeFadeVisualizer(visualization_device, n_pixels, base_color)
@@ -113,5 +113,5 @@ def activate():
     # VirutalVisualizer GUI. Since VirtualLEDStrip is a singleton class, we
     # can just reinstantiate the VirtualLEDStrip
     if developer_mode:
-        from src.SpotifyLights.virtual_led_strip import VirtualLEDStrip
+        from src.led_strips.virtual_led_strip import VirtualLEDStrip
         VirtualLEDStrip().start_visualization()
