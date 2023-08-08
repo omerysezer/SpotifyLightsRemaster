@@ -10,13 +10,11 @@ class AnimationController:
 
         self.animation_time = animation_runtime
 
-        # if no set of animations are specified, add all possible animations to list
-        if not animation_names:
-            all_animation_files = [file[:-3] for file in os.listdir('./src/Animations/LightAnimations/') if file.endswith('.py')]
-            animation_names = all_animation_files
-
         self.animations = []
         self.animation_loads_failed = []
+
+        # to prevent NoneType is not iterable error
+        animation_names = animation_names or []
         for animation_name in animation_names:
             try:   
                 animation = getattr(import_module(f"src.Animations.LightAnimations.{animation_name}", package="."), animation_name)
@@ -31,7 +29,7 @@ class AnimationController:
     def run(self):
         animation_index = 0
         time_of_animation_start = None
-        while True:
+        while True and self.animations:
             if not self.controller_to_animation_queue.empty():
                 message = self.controller_to_animation_queue.get()
 
