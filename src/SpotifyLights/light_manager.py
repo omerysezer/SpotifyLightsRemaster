@@ -13,20 +13,15 @@ import logging
 # Set the logging level to WARNING (or higher) for the root logger
 logging.basicConfig(level=logging.WARNING)
 
-def _init_visualizer(dev_mode, n_pixels, base_color):
-    if dev_mode:
-        from src.led_strips.virtual_led_strip import VirtualLEDStrip
-        visualization_device = VirtualLEDStrip()
-    else:
-        from src.led_strips.led_strip import LED_STRIP
-        visualization_device = LED_STRIP(num_led=n_pixels, strip_type='dotstar')
-
-    visualizer = LoudnessLengthEdgeFadeVisualizer(visualization_device, n_pixels, base_color)
-    loading_animator = LoadingAnimator(visualization_device, n_pixels)
+def _init_visualizer(dev_mode, led_strip, base_color):
+    num_pixels = led_strip.get_pixel_count()
+    visualization_device = led_strip
+    visualizer = LoudnessLengthEdgeFadeVisualizer(visualization_device, num_pixels, base_color)
+    loading_animator = LoadingAnimator(visualization_device, num_pixels)
     return (visualizer, loading_animator)
 
 
-def manage(dev_mode, initial_base_color, auth_manager, controller_to_lights_queue, lights_to_controller_queue, kill_sentinel):
+def manage(dev_mode, initial_base_color, auth_manager, controller_to_lights_queue, lights_to_controller_queue, kill_sentinel, led_strip):
     """ Lifecycle manager for the program
 
     In order to restart the lights remotely if an update is required, this level
@@ -40,7 +35,6 @@ def manage(dev_mode, initial_base_color, auth_manager, controller_to_lights_queu
     """
     base_color = None # We always want to update the lights on first start.
     visualizer_thread = None
-    n_pixels = 175
     visualizer = None
     spotify_visualizer = None
 
@@ -72,7 +66,7 @@ def manage(dev_mode, initial_base_color, auth_manager, controller_to_lights_queu
         # If the animation has not been instantiated or the thread has
         # completed (i.e. we killed it), we need to reinstantiate and restart.
         if not visualizer_thread or not visualizer_thread.is_alive():
-            visualizer, loading_animator = _init_visualizer(dev_mode, n_pixels, base_color)
+            visualizer, loading_animator = _init_visualizer(dev_mode, led_strip, base_color)
             spotify_visualizer = SpotifyVisualizer(visualizer, loading_animator, auth_manager)
             visualizer_thread = threading.Thread(target=spotify_visualizer.launch_visualizer, name="visualizer_thread")
             visualizer_thread.start()

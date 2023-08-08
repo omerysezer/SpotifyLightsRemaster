@@ -7,6 +7,7 @@ from src.Animations.animation_controller import AnimationController
 import threading
 from queue import Queue
 import json
+from src.led_strips.led_strip import LED_STRIP
 
 class Controller:
     def __init__(self):
@@ -34,6 +35,8 @@ class Controller:
         self.animation_kill_sentinel = object()
 
         self.current_command = None
+
+        self.led_strip = LED_STRIP(num_led=175, strip_type='dotstar')
 
     def _token_is_valid(self):
         try:
@@ -85,8 +88,10 @@ class Controller:
                 self.settings_lock.release()
 
                 if default_behaviour == "SPOTIFY_LIGHTS_ON" and self.authenticated and not self._spotify_lights_are_running():
+                    self._kill_animation_thread()
                     self._start_spotify_lights()
                 elif default_behaviour == "ANIMATION_LIGHTS_ON" and not self._animation_is_running():
+                    self._kill_spotify_lights()
                     self._start_animation_thread()
                 elif default_behaviour == "LIGHTS_OFF" and self._spotify_lights_are_running():
                     self._kill_spotify_lights()
@@ -105,7 +110,8 @@ class Controller:
         self.controller_to_lights_queue = Queue() # a queue so the controller can pass messages to spotify lights manager thread
         self.light_to_controller_queue = Queue() # a queue so spotify lights manager thread can pass messages to controller
         self.spotify_lights_thread = threading.Thread(target=manage, name="spotify_lights_thread", args=(False, base_color, self.oauth_handler,
-                                                                                                  self.controller_to_lights_queue, self.light_to_controller_queue, self.spotify_lights_kill_sentinel))
+                                                                                                  self.controller_to_lights_queue, self.light_to_controller_queue, 
+                                                                                                  self.spotify_lights_kill_sentinel, self.led_strip))
         self.spotify_lights_thread.start()
 
     def _kill_spotify_lights(self):

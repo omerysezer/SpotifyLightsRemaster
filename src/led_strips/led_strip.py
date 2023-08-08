@@ -46,3 +46,6 @@ class LED_STRIP:
 
     def show(self):
         self._strip.show()
+    
+    def get_pixel_count(self):
+        return self.num_led
