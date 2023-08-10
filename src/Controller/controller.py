@@ -8,6 +8,7 @@ import threading
 from queue import Queue
 import json
 from src.led_strips.led_strip import LED_STRIP
+import time
 
 class Controller:
     def __init__(self):
@@ -59,25 +60,29 @@ class Controller:
         while True:
             self.authenticated = self._token_is_valid() # validate token to ensure connection to spotify is not lost
             if not self.api_communicaton_queue.empty():
-                command = self.api_communicaton_queue.get()
-                if command['COMMAND'] == 'LIGHTS_OFF':
-                    if self._spotify_lights_are_running():
-                        self._kill_spotify_lights()
-                    if self._animation_is_running():
-                        self._kill_animation_thread()
-                elif command['COMMAND'] == 'SPOTIFY_LIGHTS_ON':
-                    if self._animation_is_running():
-                        self._kill_animation_thread()
-                    if not self._spotify_lights_are_running():
-                        self._start_spotify_lights()
-                elif command['COMMAND'] == 'ANIMATION_LIGHTS_ON':
-                    if self._spotify_lights_are_running():
-                        self._kill_spotify_lights()
-                    if not self._animation_is_running():
-                        self._start_animation_thread()
-                        print('starting animation')
-
-                self.current_command = command['COMMAND']
+                message = self.api_communicaton_queue.get()
+                if 'BRIGHTNESS' in message:
+                    self.led_strip.set_brightness(message['BRIGHTNESS'])
+                elif 'COMMAND' in message:
+                    command = message['COMMAND']
+                    if command == 'LIGHTS_OFF':
+                        if self._spotify_lights_are_running():
+                            self._kill_spotify_lights()
+                        if self._animation_is_running():
+                            self._kill_animation_thread()
+                    elif command == 'SPOTIFY_LIGHTS_ON':
+                        if self._animation_is_running():
+                            self._kill_animation_thread()
+                        if not self._spotify_lights_are_running():
+                            self._start_spotify_lights()
+                    elif command == 'ANIMATION_LIGHTS_ON':
+                        if self._spotify_lights_are_running():
+                            self._kill_spotify_lights()
+                        if not self._animation_is_running():
+                            self._start_animation_thread()
+                            print('starting animation')
+                    self.current_command = command
+                    
                 self.api_communicaton_queue.task_done()
 
 
@@ -92,12 +97,19 @@ class Controller:
                     self._start_spotify_lights()
                 elif default_behaviour == "ANIMATION_LIGHTS_ON" and not self._animation_is_running():
                     self._kill_spotify_lights()
-                    self._start_animation_thread()
+                    
+                    # create thread only if there are files to show
+                    self.settings_lock.acquire()
+                    animation_list = self.settings_handler.get_animations()
+                    self.settings_lock.release()
+
+                    if animation_list:
+                        self._start_animation_thread()
                 elif default_behaviour == "LIGHTS_OFF" and self._spotify_lights_are_running():
                     self._kill_spotify_lights()
                     self._kill_animation_thread()
 
-        sleep(.1)
+            time.sleep(.1)
 
     def _start_spotify_lights(self):
         if self._spotify_lights_are_running():
@@ -132,10 +144,15 @@ class Controller:
         if self._animation_is_running():
             return
         
+        self.settings_lock.acquire()
+        animation_list = self.settings_handler.get_animations()
+        animation_duration = self.settings_handler.get_animation_duration()
+        self.settings_lock.release()
+        
         self.controller_to_animation_queue = Queue()
         self.animation_to_controller_queue = Queue()
-        self.animation_controller = AnimationController(None, 0, self.controller_to_animation_queue, 
-                                                        self.animation_to_controller_queue, self.animation_kill_sentinel)
+        self.animation_controller = AnimationController(animation_list, animation_duration, self.controller_to_animation_queue, 
+                                                        self.animation_to_controller_queue, self.animation_kill_sentinel, self.led_strip)
         self.animation_thread = threading.Thread(target=self.animation_controller.run, name="animation_thread")
         self.animation_thread.start()
         

@@ -83,10 +83,12 @@ class API:
 
         @app.route('/brightness', methods=['POST'])
         def update_brightness():
-            brightness = request.get_json()['brightness']
+            brightness = int(request.get_json()['brightness'])
             self.settings_lock.acquire()
-            self.settings_handler.update_brightness(int(brightness))
+            self.settings_handler.update_brightness(brightness)
             self.settings_lock.release()
+
+            self.communication_queue.put({'BRIGHTNESS': brightness})
             return Response(status=200)
 
         @app.route('/animation_files', methods=['GET', 'POST'])
@@ -100,7 +102,6 @@ class API:
                     # If the user does not select a file, the browser submits an
                     # empty file without a filename.
                     if file.filename == '':
-                        # flash('No selected file')
                         return Response(status=400)
                     if file and self._allowed_file(file.filename):
                         try:
