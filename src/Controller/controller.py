@@ -63,7 +63,11 @@ class Controller:
                 message = self.api_communicaton_queue.get()
                 if 'BRIGHTNESS' in message:
                     self.led_strip.set_brightness(message['BRIGHTNESS'])
-                elif 'COMMAND' in message:
+                if 'BASE_COLOR' in message and self._spotify_lights_are_running():
+                    new_base_color = message['BASE_COLOR']
+                    self.controller_to_lights_queue.put({'BASE_COLOR': new_base_color})
+                    self.controller_to_lights_queue.join()
+                if 'COMMAND' in message:
                     command = message['COMMAND']
                     if command == 'LIGHTS_OFF':
                         if self._spotify_lights_are_running():
@@ -80,7 +84,6 @@ class Controller:
                             self._kill_spotify_lights()
                         if not self._animation_is_running():
                             self._start_animation_thread()
-                            print('starting animation')
                     self.current_command = command
                     
                 self.api_communicaton_queue.task_done()

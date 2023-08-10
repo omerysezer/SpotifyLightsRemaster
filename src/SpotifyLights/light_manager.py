@@ -33,7 +33,7 @@ def manage(dev_mode, initial_base_color, auth_manager, controller_to_lights_queu
     pi or a developer's machine.
 
     """
-    base_color = None # We always want to update the lights on first start.
+    base_color = initial_base_color # We always want to update the lights on first start.
     visualizer_thread = None
     visualizer = None
     spotify_visualizer = None
@@ -47,15 +47,14 @@ def manage(dev_mode, initial_base_color, auth_manager, controller_to_lights_queu
                     spotify_visualizer.terminate_visualizer()
                 if visualizer_thread and visualizer_thread.is_alive():
                     visualizer_thread.join()
-
                 controller_to_lights_queue.task_done()
                 return
-
-        new_base_color = initial_base_color
-        if new_base_color != base_color:
-            if visualizer:
-                visualizer.set_primary_color(base_color)
-            base_color = new_base_color
+            elif 'BASE_COLOR' in command:
+                new_base_color = command['BASE_COLOR']
+                if new_base_color != base_color and visualizer:
+                    visualizer.set_primary_color(new_base_color)
+                base_color = new_base_color
+                controller_to_lights_queue.task_done()
 
         if spotify_visualizer and visualizer_thread and not visualizer_thread.is_alive():
             spotify_visualizer.terminate_visualizer()

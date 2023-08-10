@@ -44,10 +44,12 @@ class API:
             brightness = self.settings_handler.get_brightness()
             already_enabled_files = self.settings_handler.get_animations()
             default_behaviour = self.settings_handler.get_default_behaviour()
+            base_r, base_g, base_b = self.settings_handler.get_base_color()
             self.settings_lock.release()
             
             return render_template("index.html", fileNames=file_names, enabledFiles=already_enabled_files, duration=animation_duration, 
-                                    brightness=brightness, default_light_setting=default_behaviour, current_behaviour=self.current_behaviour)
+                                    brightness=brightness, default_light_setting=default_behaviour, current_behaviour=self.current_behaviour,
+                                    base_r=base_r, base_g=base_g, base_b=base_b)
             
         @app.route('/login')
         def handle_spotify_auth_request():
@@ -90,6 +92,18 @@ class API:
 
             self.communication_queue.put({'BRIGHTNESS': brightness})
             return Response(status=200)
+
+        @app.route('/base_color', methods=['POST'])
+        def update_base_color():
+            base_color = int(request.form.get('base_r')), int(request.form.get('base_g')), int(request.form.get('base_b'))
+            self.settings_lock.acquire()
+            # * unpacks tuple into argument list
+            self.settings_handler.update_base_color(*base_color)
+            self.settings_lock.release()
+
+            self.communication_queue.put({'BASE_COLOR': base_color})
+            self.communication_queue.join()
+            return redirect('/')
 
         @app.route('/animation_files', methods=['GET', 'POST'])
         def upload_animation():

@@ -59,6 +59,13 @@
 
     <br/>
     
+    <form id="base_color" action="/base_color" method="post">
+        <span>Input Base Color For Spotify Lights</span>
+        <input type="number" min="0" max="255" step="1" value ="{{ base_r }}" id="base_r" name="base_r"><span>Red</span>
+        <input type="number" min="0" max="255" step="1" value ="{{ base_g }}" id="base_g" name="base_g"><span>Green</span>
+        <input type="number" min="0" max="255" step="1" value ="{{ base_b }}" id="base_b" name="base_b"><span>Blue</span>
+        <input type="submit">
+    </form>
     
     <div>
         <form id="uploadForm">
