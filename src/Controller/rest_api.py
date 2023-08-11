@@ -4,7 +4,6 @@ from src.Files.credentials import USERNAME, SPOTIPY_CLIENT_ID, SPOTIPY_CLIENT_SE
     AWS_SECRET_KEY
 import random, string
 import os
-import threading
 import zipfile
 import shutil
 
@@ -44,13 +43,14 @@ class API:
             brightness = self.settings_handler.get_brightness()
             already_enabled_files = self.settings_handler.get_animations()
             default_behaviour = self.settings_handler.get_default_behaviour()
-            base_r, base_g, base_b = self.settings_handler.get_base_color()
+            primary_color = self.settings_handler.get_primary_color()
+            secondary_color = self.settings_handler.get_secondary_color()
             self.settings_lock.release()
-            
+             
             return render_template("index.html", fileNames=file_names, enabledFiles=already_enabled_files, duration=animation_duration, 
-                                    brightness=brightness, default_light_setting=default_behaviour, current_behaviour=self.current_behaviour,
-                                    base_r=base_r, base_g=base_g, base_b=base_b)
-            
+                                   brightness=brightness, default_light_setting=default_behaviour, current_behaviour=self.current_behaviour, 
+                                   primary_color=primary_color, secondary_color=secondary_color)
+
         @app.route('/login')
         def handle_spotify_auth_request():
             state = ''.join(random.choices(string.ascii_letters + string.digits, k = 16))
@@ -93,15 +93,29 @@ class API:
             self.communication_queue.put({'BRIGHTNESS': brightness})
             return Response(status=200)
 
-        @app.route('/base_color', methods=['POST'])
+        @app.route('/colors', methods=['POST'])
         def update_base_color():
-            base_color = int(request.form.get('base_r')), int(request.form.get('base_g')), int(request.form.get('base_b'))
+            def hex_to_rgb(hex):
+                hex = hex[1:] # remove leading #
+
+                r = int(hex[:2], 16)
+                g= int(hex[2:4], 16)
+                b = int(hex[4:6], 16)
+
+                return (r, g, b)
+
+            primary_color_hex_str = request.form.get('primary_color') 
+            secondary_color_hex_str = request.form.get('secondary_color') 
+            primary_color = hex_to_rgb(primary_color_hex_str)
+            secondary_color = hex_to_rgb(secondary_color_hex_str)
+
             self.settings_lock.acquire()
             # * unpacks tuple into argument list
-            self.settings_handler.update_base_color(*base_color)
+            self.settings_handler.update_primary_color(*primary_color)
+            self.settings_handler.update_secondary_color(*secondary_color)
             self.settings_lock.release()
 
-            self.communication_queue.put({'BASE_COLOR': base_color})
+            self.communication_queue.put({'SPOTIFY_COLORS': [primary_color, secondary_color]})
             self.communication_queue.join()
             return redirect('/')
 

@@ -3,10 +3,15 @@ import os
 
 DEFAULT_SETTINGS = {
     "DEFAULT_BEHAVIOUR": "SPOTIFY_LIGHTS_ON",
-    "BASE_RGB": [
+    "PRIMARY_RGB": [
         255,
         255,
         255
+    ],
+    "SECONDARY_RGB": [
+        0,
+        0,
+        0
     ],
     "ANIMATIONS_LIST": [],
     "ANIMATION_DURATION": 10,
@@ -36,16 +41,25 @@ class SettingsHandler():
         with open(self.settings_path, 'w') as json_file:
             json.dump(data, json_file, indent=4)
         
-    def update_base_color(self, r=None, g=None, b=None):
+    def update_primary_color(self, r, g, b):
         rgb_arr = [r, g, b]
         settings = self._read_settings()
-        rgb_arr = [color if color is not None else settings['BASE_RGB'][i] for i, color in enumerate(rgb_arr)]
-        settings['BASE_RGB'] = rgb_arr
+        settings['PRIMARY_RGB'] = rgb_arr
         self._write_settings(settings)
 
-    def get_base_color(self):
+    def get_primary_color(self):
         settings = self._read_settings()
-        return tuple(settings['BASE_RGB'])
+        return tuple(settings['PRIMARY_RGB'])
+
+    def update_secondary_color(self, r, g, b):
+        rgb_arr = [r, g, b]
+        settings = self._read_settings()
+        settings['SECONDARY_RGB'] = rgb_arr
+        self._write_settings(settings)
+
+    def get_secondary_color(self):
+        settings = self._read_settings()
+        return tuple(settings['SECONDARY_RGB'])
 
     def update_git_branch(self, branch=None):
         settings = self._read_settings()

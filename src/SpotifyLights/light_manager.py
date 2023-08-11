@@ -13,15 +13,15 @@ import logging
 # Set the logging level to WARNING (or higher) for the root logger
 logging.basicConfig(level=logging.WARNING)
 
-def _init_visualizer(dev_mode, led_strip, base_color):
+def _init_visualizer(dev_mode, led_strip, primary_color, secondary_color):
     num_pixels = led_strip.get_pixel_count()
     visualization_device = led_strip
-    visualizer = LoudnessLengthEdgeFadeVisualizer(visualization_device, num_pixels, base_color)
+    visualizer = LoudnessLengthEdgeFadeVisualizer(visualization_device, num_pixels, primary_color, secondary_color)
     loading_animator = LoadingAnimator(visualization_device, num_pixels)
     return (visualizer, loading_animator)
 
 
-def manage(dev_mode, initial_base_color, auth_manager, controller_to_lights_queue, lights_to_controller_queue, kill_sentinel, led_strip):
+def manage(dev_mode, initial_primary_color, initial_secondary_color, auth_manager, controller_to_lights_queue, lights_to_controller_queue, kill_sentinel, led_strip):
     """ Lifecycle manager for the program
 
     In order to restart the lights remotely if an update is required, this level
@@ -33,7 +33,8 @@ def manage(dev_mode, initial_base_color, auth_manager, controller_to_lights_queu
     pi or a developer's machine.
 
     """
-    base_color = initial_base_color # We always want to update the lights on first start.
+    primary_color = initial_primary_color # We always want to update the lights on first start.
+    secondary_color = initial_secondary_color
     visualizer_thread = None
     visualizer = None
     spotify_visualizer = None
@@ -49,11 +50,15 @@ def manage(dev_mode, initial_base_color, auth_manager, controller_to_lights_queu
                     visualizer_thread.join()
                 controller_to_lights_queue.task_done()
                 return
-            elif 'BASE_COLOR' in command:
-                new_base_color = command['BASE_COLOR']
-                if new_base_color != base_color and visualizer:
-                    visualizer.set_primary_color(new_base_color)
-                base_color = new_base_color
+            elif 'SPOTIFY_COLORS' in command:
+                new_primary_color, new_secondary_color = command['SPOTIFY_COLORS']
+                if visualizer:
+                    if new_primary_color != primary_color:
+                        visualizer.set_primary_color(new_primary_color)
+                    if new_secondary_color != secondary_color:
+                        visualizer.set_secondary_color(new_secondary_color)
+                primary_color = new_primary_color
+                secondary_color = new_secondary_color
                 controller_to_lights_queue.task_done()
 
         if spotify_visualizer and visualizer_thread and not visualizer_thread.is_alive():
@@ -65,7 +70,7 @@ def manage(dev_mode, initial_base_color, auth_manager, controller_to_lights_queu
         # If the animation has not been instantiated or the thread has
         # completed (i.e. we killed it), we need to reinstantiate and restart.
         if not visualizer_thread or not visualizer_thread.is_alive():
-            visualizer, loading_animator = _init_visualizer(dev_mode, led_strip, base_color)
+            visualizer, loading_animator = _init_visualizer(dev_mode, led_strip, primary_color, secondary_color)
             spotify_visualizer = SpotifyVisualizer(visualizer, loading_animator, auth_manager)
             visualizer_thread = threading.Thread(target=spotify_visualizer.launch_visualizer, name="visualizer_thread")
             visualizer_thread.start()

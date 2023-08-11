@@ -59,14 +59,16 @@
 
     <br/>
     
-    <form id="base_color" action="/base_color" method="post">
-        <span>Input Base Color For Spotify Lights</span>
-        <input type="number" min="0" max="255" step="1" value ="{{ base_r }}" id="base_r" name="base_r"><span>Red</span>
-        <input type="number" min="0" max="255" step="1" value ="{{ base_g }}" id="base_g" name="base_g"><span>Green</span>
-        <input type="number" min="0" max="255" step="1" value ="{{ base_b }}" id="base_b" name="base_b"><span>Blue</span>
+    <form id="base_color" action="/colors" method="post">
+        <span>Input Base Color For Spotify Lights</span><br/>
+        <input type="color" id="primary_color" name="primary_color"/><label for="head">Primary Color</label>
+        <input type="color" id="secondary_color" name="secondary_color"/><label for="head">Secondary Color</label>
+        <br/>
         <input type="submit">
     </form>
     
+    <br/>
+
     <div>
         <form id="uploadForm">
             <input type="file" id="fileInput" name="file" />
@@ -102,7 +104,7 @@
 </body>
 </html>
 
-<script>
+<script type="text/javascript">
     function submit_animation_form(action){
         const form = document.getElementById('animation_form')
         const formData = new FormData(form)
@@ -162,11 +164,6 @@
             1000)
         })
     }
-    
-    const buttons = document.getElementsByName("light_setting") 
-    for(let i = 0; i < buttons.length; i++){
-        buttons[i].addEventListener("click", on_radio_click)
-    }
 
     function all_boxes_checked(){
         const checkbox_elements = document.getElementById("animations_checkboxes").getElementsByTagName("input")
@@ -217,4 +214,24 @@
         
         brightness_display.innerHTML = brightness_slider.value + '%'
     }
+
+    (function load_primary_secondary_colors(){
+        function convert_decimal_to_hex(num){
+            num_hex = num.toString(16)
+            if(num_hex.length < 2){
+                num_hex = '0' + num_hex
+            }
+
+            return num_hex.toUpperCase()
+        }
+
+        let primary_color_input = document.getElementById('primary_color')
+        let secondary_color_input = document.getElementById('secondary_color')
+
+        let primary_color_hex = JSON.parse('{{ primary_color | tojson | safe }}').map(convert_decimal_to_hex).reduce((acc, s) => acc + s, '#')
+        let secondary_color_hex = JSON.parse('{{ secondary_color | tojson | safe }}').map(convert_decimal_to_hex).reduce((acc, s) => acc + s, '#')
+        
+        primary_color_input.value = primary_color_hex
+        secondary_color_input.value = secondary_color_hex
+    })()
 </script>

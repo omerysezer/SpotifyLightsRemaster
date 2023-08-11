@@ -63,9 +63,8 @@ class Controller:
                 message = self.api_communicaton_queue.get()
                 if 'BRIGHTNESS' in message:
                     self.led_strip.set_brightness(message['BRIGHTNESS'])
-                if 'BASE_COLOR' in message and self._spotify_lights_are_running():
-                    new_base_color = message['BASE_COLOR']
-                    self.controller_to_lights_queue.put({'BASE_COLOR': new_base_color})
+                if 'SPOTIFY_COLORS' in message and self._spotify_lights_are_running():
+                    self.controller_to_lights_queue.put({'SPOTIFY_COLORS': message['SPOTIFY_COLORS']})
                     self.controller_to_lights_queue.join()
                 if 'COMMAND' in message:
                     command = message['COMMAND']
@@ -119,12 +118,13 @@ class Controller:
             return
         
         self.settings_lock.acquire()
-        base_color = self.settings_handler.get_base_color()
+        primary_color = self.settings_handler.get_primary_color()
+        secondary_color = self.settings_handler.get_secondary_color()
         self.settings_lock.release()
 
         self.controller_to_lights_queue = Queue() # a queue so the controller can pass messages to spotify lights manager thread
         self.light_to_controller_queue = Queue() # a queue so spotify lights manager thread can pass messages to controller
-        self.spotify_lights_thread = threading.Thread(target=manage, name="spotify_lights_thread", args=(False, base_color, self.oauth_handler,
+        self.spotify_lights_thread = threading.Thread(target=manage, name="spotify_lights_thread", args=(False, primary_color, secondary_color, self.oauth_handler,
                                                                                                   self.controller_to_lights_queue, self.light_to_controller_queue, 
                                                                                                   self.spotify_lights_kill_sentinel, self.led_strip))
         self.spotify_lights_thread.start()
