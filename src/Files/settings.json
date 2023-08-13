@@ -1,0 +1,18 @@
+{
+    "DEFAULT_BEHAVIOUR": "SPOTIFY_LIGHTS_ON",
+    "PRIMARY_RGB": [
+        255,
+        255,
+        255
+    ],
+    "SECONDARY_RGB": [
+        0,
+        0,
+        0
+    ],
+    "ANIMATIONS_LIST": [],
+    "ANIMATION_DURATION": 10,
+    "BRIGHTNESS": 50,
+    "GIT_BRANCH": "master",
+    "GIT_COMMIT_ID": "dd1490f"
+}
