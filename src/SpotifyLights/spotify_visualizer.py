@@ -1,7 +1,4 @@
-import boto3 as AWS
-from src.Files.credentials import USERNAME, SPOTIPY_CLIENT_ID, SPOTIPY_CLIENT_SECRET, SPOTIPY_REDIRECT_URI, AWS_ACCESS_KEY,\
-    AWS_SECRET_KEY
-from src.SpotifyLights.dynamodb_client import DynamoDBClient
+from src.Files.credentials import USERNAME, SPOTIPY_CLIENT_ID, SPOTIPY_CLIENT_SECRET, SPOTIPY_REDIRECT_URI
 import numpy as np
 from scipy.interpolate import interp1d
 import spotipy
@@ -186,7 +183,7 @@ class SpotifyVisualizer:
         self.should_terminate = True
         self.song_ended = True
 
-    def _continue_checking_if_paused(self, wait=0.33):
+    def _continue_checking_if_paused(self, wait=2):
         """Continuously checks if user's playback is paused, and updates self.is_playing accordingly.
 
         If the user's playback is paused, we should display an animation on the strip until playback resumes.
@@ -204,7 +201,7 @@ class SpotifyVisualizer:
         text = "Killing Pause Checking Thread"
         print(SpotifyVisualizer._make_text_effect(text, ["red", "bold"]))
 
-    def _continue_checking_if_skip(self, wait=0.33):
+    def _continue_checking_if_skip(self, wait=2):
         """Continuously checks if the user's playing track has changed. Called asynchronously (worker thread).
 
         If the user's currently playing track has changed (is different from track), then this function pauses the
@@ -233,7 +230,7 @@ class SpotifyVisualizer:
         text = "A skip has occurred."
         print(SpotifyVisualizer._make_text_effect(text, ["blue", "bold"]))
 
-    def _continue_loading_data(self, wait=0.5):
+    def _continue_loading_data(self, wait=1):
         """Continuously loads and prepares chunks of data. Called asynchronously (worker thread).
 
         Args:
@@ -269,7 +266,7 @@ class SpotifyVisualizer:
         print(SpotifyVisualizer._make_text_effect(text, ["red", "bold"]))
         exit(0)
 
-    def _continue_syncing(self, wait=0.05):
+    def _continue_syncing(self, wait=1):
         """Repeatedly syncs visualization playback position with the Spotify API.
 
         Args:

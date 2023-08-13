@@ -3,8 +3,6 @@ import threading
 import time
 
 from src.SpotifyLights.Animations.LoadingAnimator import LoadingAnimator
-from src.Files.credentials import AWS_ACCESS_KEY, AWS_SECRET_KEY, USER
-from src.SpotifyLights.dynamodb_client import DynamoDBClient
 from src.SpotifyLights.spotify_visualizer import SpotifyVisualizer
 from src.SpotifyLights.Visualizations.LoudnessLengthEdgeFadeVisualizer import LoudnessLengthEdgeFadeVisualizer
 
