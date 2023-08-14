@@ -159,6 +159,9 @@ class API:
                     self.settings_handler.update_animation_duration(animation_duration)
                     self.settings_lock.release()
                     
+                    self.communication_queue.put({'ANIMATION_SETTINGS_UPDATED'})
+                    self.communication_queue.join()
+                    
                     return redirect('/')
                 elif request.form['action'] == 'delete':
                     selected_animations = request.form.getlist('selected_files')

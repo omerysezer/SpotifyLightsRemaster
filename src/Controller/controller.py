@@ -68,6 +68,9 @@ class Controller:
                 if 'AUTH_HANDLER' in message:
                     self._kill_spotify_lights()
                     self._start_spotify_lights()
+                if 'ANIMATION_SETTINGS_UPDATED' in message:
+                    self._kill_animation_thread()
+                    self._start_animation_thread()
                     
                 self.api_communicaton_queue.task_done()
             if not self.light_to_controller_queue.empty():
