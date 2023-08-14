@@ -23,7 +23,7 @@ class RainbowWaterFall:
         self.ms_between_droplets_right_side = 100
         self.ms_between_droplets_left_side = 100
 
-        self.ms_between_frames_falling_droplets = 50
+        self.ms_between_frames_falling_droplets = 10
 
         self.ms_since_last_rotation = float('-inf')
         self.ms_between_rotation_frames = 50
@@ -81,7 +81,7 @@ class RainbowWaterFall:
             pixel = self.falling_droplets[droplet_idx]        
             color, pixel_idx, time_since_last_frame = pixel['color'], pixel['idx'], pixel['ms_since_last_animation']  
             
-            if time() * 1000 - time_since_last_frame >= self.ms_between_frames_falling_droplets:
+            if False or time() * 1000 - time_since_last_frame >= self.ms_between_frames_falling_droplets:
                 self.pixel_values[pixel_idx] = (0, 0, 0)
                 self.strip.set_pixel(pixel_idx, 0, 0, 0)
 
