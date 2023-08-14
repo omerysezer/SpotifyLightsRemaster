@@ -1,10 +1,12 @@
 import spotipy
-from spotipy.oauth2 import SpotifyOAuth
-from src.Files.credentials import USERNAME, SPOTIPY_CLIENT_ID, SPOTIPY_CLIENT_SECRET, SPOTIPY_REDIRECT_URI
+from spotipy.oauth2 import SpotifyOAuth, CacheFileHandler
+from src.Files.credentials import SPOTIPY_CLIENT_ID, SPOTIPY_REDIRECT_URI
 import random, string
 import os
 import zipfile
 import shutil
+from glob import glob
+from src.Controller.spotify_login_handler import remove_user_login, login_user, current_spotify_username, user_is_logged_in
 
 permission_scopes = "user-modify-playback-state user-read-currently-playing user-read-playback-state"
 
@@ -27,7 +29,7 @@ class API:
     def _allowed_file(self, filename):
         return '.' in filename and \
             filename.rsplit('.', 1)[1].lower() in ['py']
-
+    
     def run(self):
         app = Flask(__name__)
 
@@ -45,26 +47,32 @@ class API:
             primary_color = self.settings_handler.get_primary_color()
             secondary_color = self.settings_handler.get_secondary_color()
             self.settings_lock.release()
-             
+            
+            username = None if not user_is_logged_in() else current_spotify_username()
             return render_template("index.html", fileNames=file_names, enabledFiles=already_enabled_files, duration=animation_duration, 
                                    brightness=brightness, default_light_setting=default_behaviour, current_behaviour=self.current_behaviour, 
-                                   primary_color=primary_color, secondary_color=secondary_color)
+                                   primary_color=primary_color, secondary_color=secondary_color, username=username)
 
-        @app.route('/login')
-        def handle_spotify_auth_request():
+        @app.route('/login', methods=['GET'])
+        def login():
             state = ''.join(random.choices(string.ascii_letters + string.digits, k = 16))
             auth_request = f'https://accounts.spotify.com/authorize?response_type=code&client_id={SPOTIPY_CLIENT_ID}&scope={permission_scopes}&redirect_uri={SPOTIPY_REDIRECT_URI}&state={state}'
             return redirect(auth_request)
 
-        @app.route('/spotifyredirect')
+        @app.route('/logout', methods=['GET'])
+        def logout():
+            self.communication_queue.put({'LOGGED_OUT'}) # kill lights before touching spotify authentication stuff to prevent errors
+            self.communication_queue.join()
+            remove_user_login()
+            return redirect("/")
+
+        @app.route('/spotifyredirect', methods=['GET'])
         def get_spotify_token_and_cache_it():
             args = request.args
             code = args.get('code')
             state = args.get('state')
-            oauth = SpotifyOAuth(username=USERNAME, client_id=SPOTIPY_CLIENT_ID, client_secret=SPOTIPY_CLIENT_SECRET, redirect_uri=SPOTIPY_REDIRECT_URI, 
-                                scope=permission_scopes, cache_path=f"./src/Files/.cache-{USERNAME}", open_browser=False, state=state)
-
-            oauth.get_access_token(code=code, check_cache=True)
+            oauth = login_user(code, state)
+            self.communication_queue.put({'LOGGED_IN'})
             return redirect("/")
         
         @app.route('/light_setting', methods=['POST'])

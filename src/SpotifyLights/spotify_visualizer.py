@@ -1,4 +1,3 @@
-from src.Files.credentials import USERNAME, SPOTIPY_CLIENT_ID, SPOTIPY_CLIENT_SECRET, SPOTIPY_REDIRECT_URI
 import numpy as np
 from scipy.interpolate import interp1d
 import spotipy
@@ -8,7 +7,6 @@ import threading
 import time
 from src.SpotifyLights.Visualizations.LoudnessLengthEdgeFadeVisualizer import LoudnessLengthEdgeFadeVisualizer
 from src.SpotifyLights.Visualizations.LoudnessLengthWithPitchVisualizer import LoudnessLengthWithPitchVisualizer
-from queue import Queue
 
 __author__ = "Yusuf Sezer"
 

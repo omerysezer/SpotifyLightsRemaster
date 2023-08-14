@@ -42,6 +42,12 @@
             <i>Spotify Lights On {% if default_light_setting == "SPOTIFY_LIGHTS_ON" %} (Default) {% endif %} 
                 {% if current_behaviour == "SPOTIFY_LIGHTS_ON" %} (Active) {% endif %} 
             </i>
+            <i {%if username %} style="color:#00FF00" {%else%} style="color:#FF0000" {%endif%}> {%if username %} Logged In: {{ username }} {%else%} Logged Out {%endif%}</i>
+            {%if username %}
+            <a href="{{ url_for('logout') }}"><button type="button">Logout</button></a>
+            {%else%}
+            <a href="{{ url_for('login') }}"><button type="button">Login</button></a>
+            {%endif%}
         </label>
         <br/>
         <label>
