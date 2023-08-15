@@ -29,6 +29,18 @@
         OMER'S ROOM LIGHTS
     </h1>
     
+    <form id="strip_settings" action='/strip' method="post">
+        <select name='strip_type' id='strip_type'>
+            <option value='dotstar' {% if strip_type == "dotstar" %} selected {% endif %}>Dotstar</option>
+            <option value='neopixel' {% if strip_type == "neopixel" %} selected {% endif %}>Neopixel</option>
+        </select>
+        <br/>
+        <input type="number" min="0" step="1" value="{{ led_count }}" name="led_count" id="led_count">Number of LED's</input>
+        <br>
+        <input type="submit" value="Submit LED Strip Settings">
+    </form> 
+
+    <br/>
     <form id="light_setting" action="/light_setting" method="post">
         <label>
             <input type="radio" id="LIGHTS_OFF" name="light_setting" value="LIGHTS_OFF" {% if current_behaviour == "LIGHTS_OFF" %} checked {% endif %}>
@@ -73,7 +85,7 @@
         <input type="color" id="primary_color" name="primary_color"/><label for="head">Primary Color</label>
         <input type="color" id="secondary_color" name="secondary_color"/><label for="head">Secondary Color</label>
         <br/>
-        <input type="submit">
+        <input type="submit" value="Submit Color Settings">
     </form>
     
     <br/>

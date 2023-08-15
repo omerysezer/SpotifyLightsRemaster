@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <h1>Before we begin, please enter the following information about your led strip setup. You can update this at any time.</h1>
+    <form action='/strip' method="post">
+        <select name='strip_type' id='strip_type'>
+            <option value='dotstar'>Dotstar</option>
+            <option value='neopixel'>Neopixel</option>
+        </select>
+        <br/>
+        <input type="number" min="0" step="1" value="0" name="led_count" id="led_count">Number of LED's</input>
+        <br>
+        <br>
+        <input type="submit">
+    </form> 
+</body>
+</html>

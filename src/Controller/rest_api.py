@@ -57,6 +57,8 @@ class API:
             default_behaviour = self.settings_handler.get_default_behaviour()
             primary_color = self.settings_handler.get_primary_color()
             secondary_color = self.settings_handler.get_secondary_color()
+            led_strip_type = self.settings_handler.get_strip_type()
+            led_count = self.settings_handler.get_led_count()
             self.settings_lock.release()
 
             self.behavior_lock.acquire()
@@ -68,9 +70,14 @@ class API:
             self.timed_out_lock.release()
 
             username = None if not user_is_logged_in() else current_spotify_username()
+
+            if not led_strip_type:
+                return render_template("setup.html")
+
             return render_template("index.html", fileNames=file_names, enabledFiles=already_enabled_files, duration=animation_duration, 
                                    brightness=brightness, default_light_setting=default_behaviour, current_behaviour=self.current_behaviour, 
-                                   primary_color=primary_color, secondary_color=secondary_color, username=username, spotify_lights_timed_out=self.spotify_lights_timed_out)
+                                   primary_color=primary_color, secondary_color=secondary_color, username=username, spotify_lights_timed_out=self.spotify_lights_timed_out,
+                                   strip_type=led_strip_type, led_count=led_count)
 
         @app.route('/login', methods=['GET'])
         def login():
@@ -125,6 +132,22 @@ class API:
 
             self.communication_queue.put({'BRIGHTNESS': brightness})
             return Response(status=200)
+
+        @app.route('/strip', methods=['POST'])
+        def update_strip_type():
+            strip_type = request.form.get('strip_type')
+            num_led = int(request.form.get('led_count'))
+            try:
+                self.settings_handler.update_strip_type(strip_type)
+            except:
+                return f'Strip type: {strip_type} is unsupported.', 400
+            
+            print(strip_type, num_led)
+            self.settings_handler.update_led_count(num_led)
+
+            self.communication_queue.put({'UPDATE_STRIP_TYPE': {'NUM_LED': num_led, 'STRIP_TYPE': strip_type}})
+            self.communication_queue.join()
+            return redirect("/")
 
         @app.route('/colors', methods=['POST'])
         def update_base_color():

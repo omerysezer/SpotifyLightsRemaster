@@ -32,7 +32,9 @@ class Controller:
 
         self.current_command = None
 
-        self.led_strip = LED_STRIP(num_led=175, strip_type='dotstar')
+        led_strip_type = self.settings_handler.get_strip_type()
+        led_count = self.settings_handler.get_led_count()
+        self.led_strip = None if led_strip_type is None else LED_STRIP(led_count, led_strip_type)        
         
     def run(self):
         self.api_thread = threading.Thread(target=self.api.run, name="rest_api_thread")
@@ -74,6 +76,14 @@ class Controller:
                 if 'ANIMATION_SETTINGS_UPDATED' in message:
                     self._kill_animation_thread()
                     self._start_animation_thread()
+                if 'UPDATE_STRIP_TYPE' in message:
+                    strip_details = message['UPDATE_STRIP_TYPE']
+                    num_led = strip_details['NUM_LED']
+                    strip_type = strip_details['STRIP_TYPE']
+                    self._kill_spotify_lights()
+                    self._kill_animation_thread()
+                    self.led_strip = LED_STRIP(num_led, strip_type)
+
                     
                 self.api_communicaton_queue.task_done()
             if not self.light_to_controller_queue.empty():
@@ -94,7 +104,7 @@ class Controller:
                 self._kill_spotify_lights()
 
             # default behaviour should only be triggered if there is no overriding command in self.current_command
-            if not self.current_command:
+            if not self.current_command and self.led_strip:
                 self.settings_lock.acquire()
                 default_behaviour = self.settings_handler.get_default_behaviour() 
                 self.settings_lock.release()
@@ -116,11 +126,29 @@ class Controller:
                 elif default_behaviour == "LIGHTS_OFF":
                     self._kill_spotify_lights()
                     self._kill_animation_thread()
+            elif self.current_command and self.led_strip:
+                if self.current_command == "SPOTIFY_LIGHTS_ON" and not self._spotify_lights_are_running() and authenticated:
+                     if not self.spotify_lights_encounterd_error:
+                        self._kill_animation_thread()
+                        self._start_spotify_lights()
+                elif self.current_command == "ANIMATION_LIGHTS_ON" and not self._animation_is_running():
+                    self._kill_spotify_lights()
+                    
+                    # create thread only if there are files to show
+                    self.settings_lock.acquire()
+                    animation_list = self.settings_handler.get_animations()
+                    self.settings_lock.release()
 
+                    if animation_list:
+                        self._start_animation_thread()
+                elif self.current_command == "LIGHTS_OFF":
+                    self._kill_spotify_lights()
+                    self._kill_animation_thread()
+                    
             time.sleep(.1)
 
     def _start_spotify_lights(self):
-        if self._spotify_lights_are_running():
+        if self._spotify_lights_are_running() or not self.led_strip:
             return
         
         self.settings_lock.acquire()
@@ -151,7 +179,7 @@ class Controller:
         return self.spotify_lights_thread and self.spotify_lights_thread.is_alive()
             
     def _start_animation_thread(self):
-        if self._animation_is_running():
+        if self._animation_is_running() or not self.led_strip:
             return
         
         self.settings_lock.acquire()

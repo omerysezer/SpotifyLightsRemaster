@@ -13,6 +13,8 @@ DEFAULT_SETTINGS = {
         0,
         0
     ],
+    "STRIP_TYPE": None,
+    'LED_COUNT': 0,
     "ANIMATIONS_LIST": [],
     "ANIMATION_DURATION": 10,
     "BRIGHTNESS": 50,
@@ -27,6 +29,12 @@ class SettingsHandler():
         if not os.path.exists(path):
             os.mknod(path)
             self._write_settings(DEFAULT_SETTINGS)
+        else:
+            settings = self._read_settings()
+            for key in DEFAULT_SETTINGS.keys():
+                if key not in settings:
+                    settings[key] = DEFAULT_SETTINGS[key]
+            self._write_settings(settings)
     
     def _read_settings(self):
         data = None
@@ -124,5 +132,24 @@ class SettingsHandler():
     def get_brightness(self):
         return self._read_settings()['BRIGHTNESS']
 
+    def get_strip_type(self):
+        return self._read_settings()['STRIP_TYPE']
+
+    def update_strip_type(self, strip_type):
+        if strip_type not in ['dotstar', 'neopixel']:
+            raise Exception('Unsupported strip type.')
+        
+        settings = self._read_settings()
+        settings['STRIP_TYPE'] = strip_type
+        self._write_settings(settings)
+    
+    def get_led_count(self):
+        return self._read_settings()['LED_COUNT']
+        
+    def update_led_count(self, led_count):
+        settings = self._read_settings()
+        settings['LED_COUNT'] = led_count
+        self._write_settings(settings)
+        
     def reset_settings(self):
         self._write_settings(DEFAULT_SETTINGS)
