@@ -2,21 +2,21 @@ import json
 import os
 
 DEFAULT_SETTINGS = {
-    "DEFAULT_BEHAVIOUR": "SPOTIFY_LIGHTS_ON",
+    "DEFAULT_BEHAVIOUR": "LIGHTS_OFF",
     "PRIMARY_RGB": [
-        255,
-        255,
+        0,
+        0,
         255
     ],
     "SECONDARY_RGB": [
-        0,
-        0,
+        255,
+        255,
         0
     ],
     "STRIP_TYPE": None,
     'LED_COUNT': 0,
     "ANIMATIONS_LIST": [],
-    "ANIMATION_DURATION": 10,
+    "ANIMATION_DURATION": 60,
     "BRIGHTNESS": 50,
     "GIT_BRANCH": "master",
     "GIT_COMMIT_ID": "dd1490f"
