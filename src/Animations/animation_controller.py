@@ -36,8 +36,8 @@ class AnimationController:
                 message = self.controller_to_animation_queue.get()
 
                 if message == self.kill_sentinel:
-                    self.strip.fill_all(0, 0, 0)
-                    self.strip.show()
+                    self.lights.fill_all(0, 0, 0)
+                    self.lights.show()
                     return
             
             # move on to the next animation if time for current animation is up or we have not started any animation yet
