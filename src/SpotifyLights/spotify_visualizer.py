@@ -101,15 +101,19 @@ class SpotifyVisualizer:
     def get_track(self):
         """Fetches current track (waits for a track if necessary), starts it from beginning, and loads some track data.
         """
+        ms_between_checks = 5 * 1000
+        ms_of_last_check = float('-inf')
         text = "Waiting for an active Spotify track to start visualization."
         print(SpotifyVisualizer._make_text_effect(text, ["green", "bold"]))
         while not self.track and not self.should_terminate:
-            self.track = self.sp_gen.current_user_playing_track()
+            if time.time() * 1000 - ms_of_last_check >= ms_between_checks:
+                self.track = self.sp_gen.current_user_playing_track()
 
-            if not self.track or not self.track["item"]:
-                self.track = None
-                
-            time.sleep(1)
+                if not self.track or not self.track["item"]:
+                    self.track = None
+
+                ms_of_last_check = time.time() * 1000    
+            time.sleep(.05)
         
         if self.should_terminate:
             return
@@ -181,7 +185,7 @@ class SpotifyVisualizer:
         self.should_terminate = True
         self.song_ended = True
 
-    def _continue_checking_if_paused(self, wait=2):
+    def _continue_checking_if_paused(self, wait=5):
         """Continuously checks if user's playback is paused, and updates self.is_playing accordingly.
 
         If the user's playback is paused, we should display an animation on the strip until playback resumes.
@@ -189,17 +193,24 @@ class SpotifyVisualizer:
         Args:
             wait (float): the amount of time in seconds to wait between each check.
         """
+
+        ms_between_checks = wait * 1000
+        ms_of_last_check = float('-inf')
         while not self.song_ended:
-            try:
-                self.is_playing = self.sp_pause.current_playback()["is_playing"]
-            except:
-                text = "Error occurred while checking if playback is paused...retrying in {} seconds.".format(wait)
-                print(SpotifyVisualizer._make_text_effect(text, ["red", "bold"]))
-            time.sleep(wait)
+            if time.time() * 1000 - ms_of_last_check >= ms_between_checks:
+                try:
+                    self.is_playing = self.sp_pause.current_playback()["is_playing"]
+                except:
+                    text = "Error occurred while checking if playback is paused...retrying in {} seconds.".format(wait)
+                    print(SpotifyVisualizer._make_text_effect(text, ["red", "bold"]))
+                
+                ms_of_last_check = time.time() * 1000
+            time.sleep(.05)
+
         text = "Killing Pause Checking Thread"
         print(SpotifyVisualizer._make_text_effect(text, ["red", "bold"]))
 
-    def _continue_checking_if_skip(self, wait=2):
+    def _continue_checking_if_skip(self, wait=5):
         """Continuously checks if the user's playing track has changed. Called asynchronously (worker thread).
 
         If the user's currently playing track has changed (is different from track), then this function pauses the
@@ -208,6 +219,9 @@ class SpotifyVisualizer:
         Args:
             wait (float): the amount of time in seconds to wait between each check.
         """
+        ms_between_checks = wait * 1000
+        ms_of_last_check = float('-inf')
+
         track = self.track
         while track and track["item"] and self.track and self.track["item"] and  track["item"]["id"] == self.track["item"]["id"]:
             if self.song_ended:
@@ -215,20 +229,25 @@ class SpotifyVisualizer:
                 text = "Killing skip checking thread. (FORCE)"
                 print(SpotifyVisualizer._make_text_effect(text, ["red", "bold"]))
                 exit(0)
-            try:
-                spotify_response = self.sp_skip.current_user_playing_track()
-                assert(spotify_response is not None)
-                track = spotify_response
-            except:
-                text = "Error occurred while checking if track has changed...retrying in {} seconds.".format(wait)
-                print(SpotifyVisualizer._make_text_effect(text, ["red", "bold"]))
-            time.sleep(wait)
+            
+            if time.time() * 1000 - ms_of_last_check >= ms_between_checks:
+                try:
+                    spotify_response = self.sp_skip.current_user_playing_track()
+                    assert(spotify_response is not None)
+                    track = spotify_response
+                except:
+                    text = "Error occurred while checking if track has changed...retrying in {} seconds.".format(wait)
+                    print(SpotifyVisualizer._make_text_effect(text, ["red", "bold"]))
+                
+                ms_of_last_check = time.time() * 1000
+
+            time.sleep(.005)
 
         self.song_ended = True
         text = "A skip has occurred."
         print(SpotifyVisualizer._make_text_effect(text, ["blue", "bold"]))
 
-    def _continue_loading_data(self, wait=1):
+    def _continue_loading_data(self, wait=10):
         """Continuously loads and prepares chunks of data. Called asynchronously (worker thread).
 
         Args:
@@ -252,33 +271,44 @@ class SpotifyVisualizer:
                 }
             )
 
+        ms_between_checks = wait * 1000
+        ms_of_last_check = float('-inf')
         # Continue preparing track data until self.data_segments is exhausted
         while len(self.data_segments) != 0 and not self.song_ended:
-            try:
-                self._load_track_data()
-            except:
-                text = "Error occurred while loading data chunk...retrying in {} seconds.".format(wait)
-                print(SpotifyVisualizer._make_text_effect(text, ["red", "bold"]))
-            time.sleep(wait)
+            if time.time() * 1000 - ms_of_last_check >= ms_between_checks:
+                try:
+                    self._load_track_data()
+                except:
+                    text = "Error occurred while loading data chunk...retrying in {} seconds.".format(wait)
+                    print(SpotifyVisualizer._make_text_effect(text, ["red", "bold"]))
+
+                ms_of_last_check = time.time() * 1000
+            time.sleep(.05)
+
         text = "Killing data loading thread."
         print(SpotifyVisualizer._make_text_effect(text, ["red", "bold"]))
         exit(0)
 
-    def _continue_syncing(self, wait=1):
+    def _continue_syncing(self, wait=5):
         """Repeatedly syncs visualization playback position with the Spotify API.
 
         Args:
             wait (float): the amount of time in seconds to wait between each sync.
         """
+        ms_between_checks = wait * 1000
+        ms_of_last_check = float('-inf')
         pos = self.playback_pos
         while round(self.track_duration - pos) != 0 and not self.song_ended:
-            try:
-                self.sync()
-            except:
-                text = "Error occurred while attempting to sync...retrying in {} seconds.".format(wait)
-                print(SpotifyVisualizer._make_text_effect(text, ["red", "bold"]))
-            time.sleep(wait)
-            pos = self.playback_pos
+            if time.time() * 1000 - ms_of_last_check >= ms_between_checks:
+                try:
+                    self.sync()
+                except:
+                    text = "Error occurred while attempting to sync...retrying in {} seconds.".format(wait)
+                    print(SpotifyVisualizer._make_text_effect(text, ["red", "bold"]))
+                pos = self.playback_pos
+                ms_of_last_check = time.time() * 1000
+            time.sleep(.05)
+
         text = "Killing synchronization thread."
         print(SpotifyVisualizer._make_text_effect(text, ["red", "bold"]))
         exit(0)
@@ -316,7 +346,7 @@ class SpotifyVisualizer:
         self.buffer_lock.release()
         return to_return
 
-    def _load_track_data(self, chunk_length=12):
+    def _load_track_data(self, chunk_length=12000):
         """Obtain track data from the Spotify API and run necessary analysis to generate data needed for visualization.
 
         Each call to this function analyzes the next chunk_length seconds of track data and produces the appropriate
