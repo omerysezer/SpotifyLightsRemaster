@@ -22,6 +22,7 @@ class Controller:
         self.controller_to_lights_queue = Queue() # a queue so the controller can pass messages to spotify lights manager thread
         self.light_to_controller_queue = Queue() # a queue so spotify lights manager thread can pass messages to controller
         self.spotify_lights_kill_sentinel = object()
+        self.spotify_lights_encounterd_error = False
 
         self.animation_controller = None
         self.animation_thread = None
@@ -57,6 +58,8 @@ class Controller:
                             self._kill_animation_thread()
                         if not self._spotify_lights_are_running():
                             self._start_spotify_lights()
+
+                        self.spotify_lights_encounterd_error = False
                     elif command == 'ANIMATION_LIGHTS_ON':
                         if self._spotify_lights_are_running():
                             self._kill_spotify_lights()
@@ -77,7 +80,14 @@ class Controller:
                 message = self.light_to_controller_queue.get()
                 if message == 'USER NOT LOGGED IN':
                     self._kill_spotify_lights()
-
+                
+                if message == 'TIMED_OUT':
+                    self._kill_spotify_lights()
+                    self.spotify_lights_encounterd_error = True
+                    if self.current_command == 'SPOTIFY_LIGHTS_ON':
+                        self.current_command = None
+                    
+                    self.api.notify_spotify_lights_timed_out()
 
             authenticated = user_is_logged_in()
             if not authenticated:
@@ -90,8 +100,9 @@ class Controller:
                 self.settings_lock.release()
 
                 if default_behaviour == "SPOTIFY_LIGHTS_ON" and not self._spotify_lights_are_running() and authenticated:
-                    self._kill_animation_thread()
-                    self._start_spotify_lights()
+                    if not self.spotify_lights_encounterd_error:
+                        self._kill_animation_thread()
+                        self._start_spotify_lights()
                 elif default_behaviour == "ANIMATION_LIGHTS_ON" and not self._animation_is_running():
                     self._kill_spotify_lights()
                     

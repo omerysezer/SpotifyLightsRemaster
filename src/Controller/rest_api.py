@@ -24,12 +24,23 @@ class API:
         self.settings_handler = settings_handler
         self.settings_lock = settings_lock
 
+        self.behavior_lock = threading.Lock()
+        self.timed_out_lock = threading.Lock()
         self.current_behaviour = self.settings_handler.get_default_behaviour()
+        self.spotify_lights_timed_out = False
 
     def _allowed_file(self, filename):
         return '.' in filename and \
             filename.rsplit('.', 1)[1].lower() in ['py']
     
+    def notify_spotify_lights_timed_out(self):
+        self.behavior_lock.acquire()
+        self.timed_out_lock.acquire()
+        self.current_behaviour = self.settings_handler.get_default_behaviour()
+        self.spotify_lights_timed_out = True
+        self.timed_out_lock.release()
+        self.behavior_lock.release()
+
     def run(self):
         app = Flask(__name__)
 
@@ -47,11 +58,19 @@ class API:
             primary_color = self.settings_handler.get_primary_color()
             secondary_color = self.settings_handler.get_secondary_color()
             self.settings_lock.release()
+
+            self.behavior_lock.acquire()
+            current_behaviour = self.current_behaviour
+            self.behavior_lock.release()
             
+            self.timed_out_lock.acquire()
+            timed_out = self.spotify_lights_timed_out
+            self.timed_out_lock.release()
+
             username = None if not user_is_logged_in() else current_spotify_username()
             return render_template("index.html", fileNames=file_names, enabledFiles=already_enabled_files, duration=animation_duration, 
                                    brightness=brightness, default_light_setting=default_behaviour, current_behaviour=self.current_behaviour, 
-                                   primary_color=primary_color, secondary_color=secondary_color, username=username)
+                                   primary_color=primary_color, secondary_color=secondary_color, username=username, spotify_lights_timed_out=self.spotify_lights_timed_out)
 
         @app.route('/login', methods=['GET'])
         def login():
@@ -84,10 +103,17 @@ class API:
                 self.settings_handler.update_default_behaviour(setting)
                 self.settings_lock.release()
             else:
+                if setting == 'SPOTIFY_LIGHTS_ON':
+                    self.timed_out_lock.acquire()
+                    self.spotify_lights_timed_out = False
+                    self.timed_out_lock.release()
+
                 self.communication_queue.put({'COMMAND': setting})
                 self.communication_queue.join()
-                self.current_behaviour = setting
 
+                self.behavior_lock.acquire()
+                self.current_behaviour = setting
+                self.behavior_lock.release()
             return redirect("/")
 
         @app.route('/brightness', methods=['POST'])

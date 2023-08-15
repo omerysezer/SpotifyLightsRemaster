@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Spotify Lights</title>
     <style>
         /* CSS style to remove bullet points from the list */
         ul {
@@ -48,6 +48,9 @@
             {%else%}
             <a href="{{ url_for('login') }}"><button type="button">Login</button></a>
             {%endif%}
+            {% if spotify_lights_timed_out %}
+            <i style="color:#FF0000">Spotify lights timed out while waiting for a track to play. To restart spotify lights please enable it again.</i>
+            {% endif %}
         </label>
         <br/>
         <label>

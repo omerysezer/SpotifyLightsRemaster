@@ -5,6 +5,7 @@ import time
 from src.SpotifyLights.Animations.LoadingAnimator import LoadingAnimator
 from src.SpotifyLights.spotify_visualizer import SpotifyVisualizer
 from src.SpotifyLights.Visualizations.LoudnessLengthEdgeFadeVisualizer import LoudnessLengthEdgeFadeVisualizer
+from queue import Queue
 
 import logging
 
@@ -36,6 +37,7 @@ def manage(dev_mode, initial_primary_color, initial_secondary_color, auth_manage
     visualizer_thread = None
     visualizer = None
     spotify_visualizer = None
+    timed_out_queue = Queue()
 
     while True:
         if not controller_to_lights_queue.empty():
@@ -58,6 +60,12 @@ def manage(dev_mode, initial_primary_color, initial_secondary_color, auth_manage
                 primary_color = new_primary_color
                 secondary_color = new_secondary_color
                 controller_to_lights_queue.task_done()
+        if not timed_out_queue.empty():
+            if spotify_visualizer and visualizer_thread and not visualizer_thread.is_alive():
+                spotify_visualizer.terminate_visualizer()
+                visualizer_thread.join()
+            lights_to_controller_queue.put('TIMED_OUT')
+            return
 
         if spotify_visualizer and visualizer_thread and not visualizer_thread.is_alive():
             spotify_visualizer.terminate_visualizer()
@@ -70,7 +78,7 @@ def manage(dev_mode, initial_primary_color, initial_secondary_color, auth_manage
         if not visualizer_thread or not visualizer_thread.is_alive():
             visualizer, loading_animator = _init_visualizer(dev_mode, led_strip, primary_color, secondary_color)
             spotify_visualizer = SpotifyVisualizer(visualizer, loading_animator, auth_manager)
-            visualizer_thread = threading.Thread(target=spotify_visualizer.launch_visualizer, name="visualizer_thread")
+            visualizer_thread = threading.Thread(target=spotify_visualizer.launch_visualizer, name="visualizer_thread", args=(timed_out_queue, ))
             visualizer_thread.start()
 
         time.sleep(1)

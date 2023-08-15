@@ -82,6 +82,8 @@ class SpotifyVisualizer:
         self.track_duration = None
         self.visualizer = visualizer
         self.auth_manager = auth_manager
+        
+        self.timed_out = False
 
     def authorize(self):
         """Handle the authorization workflow for the Spotify API.
@@ -101,11 +103,14 @@ class SpotifyVisualizer:
     def get_track(self):
         """Fetches current track (waits for a track if necessary), starts it from beginning, and loads some track data.
         """
+        time_until_timeout_ms = 10 * 1000 # look for track for 5 minutes. If this time elapses, assume the user has stopped using the lights and kill.
+        start_time = time.time() * 1000
+
         ms_between_checks = 5 * 1000
         ms_of_last_check = float('-inf')
         text = "Waiting for an active Spotify track to start visualization."
         print(SpotifyVisualizer._make_text_effect(text, ["green", "bold"]))
-        while not self.track and not self.should_terminate:
+        while not self.track and not self.should_terminate and not time.time() * 1000 - start_time >= time_until_timeout_ms:
             if time.time() * 1000 - ms_of_last_check >= ms_between_checks:
                 self.track = self.sp_gen.current_user_playing_track()
 
@@ -115,6 +120,10 @@ class SpotifyVisualizer:
                 ms_of_last_check = time.time() * 1000    
             time.sleep(.05)
         
+        if time.time() * 1000 - start_time >= time_until_timeout_ms:
+            self.timed_out = True
+            self.terminate_visualizer()
+
         if self.should_terminate:
             return
 
@@ -141,7 +150,7 @@ class SpotifyVisualizer:
         self.playback_pos = track_progress
         self.pos_lock.release()
 
-    def launch_visualizer(self):
+    def launch_visualizer(self, communication_queue):
         """Coordinate visualization by spawning the appropriate threads.
 
         There are 4 threads: one for visualization, one for periodically syncing the playback position with the Spotify
@@ -149,7 +158,7 @@ class SpotifyVisualizer:
         changed.
         """
         self.authorize()
-        while not self.should_terminate:
+        while not self.should_terminate and not self.timed_out:
             self._reset()
             self.get_track()
 
@@ -175,6 +184,9 @@ class SpotifyVisualizer:
             
             print(SpotifyVisualizer._make_text_effect(text, ["green"]))
 
+        if self.timed_out:
+            communication_queue.put('TIMED_OUT')
+
     def terminate_visualizer(self):
         """ Send a signal to kill all threads.
 
@@ -193,10 +205,12 @@ class SpotifyVisualizer:
         Args:
             wait (float): the amount of time in seconds to wait between each check.
         """
+        time_until_timeout_ms = 10 * 1000 # check if pausing for 5 minutes. If this time elapses, assume the user has stopped using the lights and kill.
+        start_time = time.time() * 1000
 
         ms_between_checks = wait * 1000
         ms_of_last_check = float('-inf')
-        while not self.song_ended:
+        while not self.song_ended and not time.time() * 1000 - start_time >= time_until_timeout_ms:
             if time.time() * 1000 - ms_of_last_check >= ms_between_checks:
                 try:
                     self.is_playing = self.sp_pause.current_playback()["is_playing"]
@@ -206,6 +220,10 @@ class SpotifyVisualizer:
                 
                 ms_of_last_check = time.time() * 1000
             time.sleep(.05)
+
+        if time.time() * 1000 - start_time >= time_until_timeout_ms:
+            self.timed_out = True
+            self.terminate_visualizer()
 
         text = "Killing Pause Checking Thread"
         print(SpotifyVisualizer._make_text_effect(text, ["red", "bold"]))
