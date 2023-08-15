@@ -142,7 +142,6 @@ class API:
             except:
                 return f'Strip type: {strip_type} is unsupported.', 400
             
-            print(strip_type, num_led)
             self.settings_handler.update_led_count(num_led)
 
             self.communication_queue.put({'UPDATE_STRIP_TYPE': {'NUM_LED': num_led, 'STRIP_TYPE': strip_type}})
