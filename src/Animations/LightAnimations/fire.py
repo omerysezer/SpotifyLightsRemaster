@@ -26,9 +26,6 @@ class fire:
                 for i in range(int(self.num_led * chance)):
                     new_color = tuple([min(255, int(random.randint(75, 100) / 100 * channel)) for channel in color])
                     self.strip.set_pixel(pixel_indices[i], *new_color)
-            
-            # for index in pixel_indices:
-            #     self.strip.set_pixel(index, random.choice(self.fire_colors)['color'])
 
             self.strip.show()
             self.last_frame_start_ms = time() * 1000
