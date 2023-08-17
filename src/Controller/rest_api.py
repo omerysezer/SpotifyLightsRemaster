@@ -74,10 +74,25 @@ class API:
             if not led_strip_type:
                 return render_template("setup.html")
 
+            curr_file = None
+            prev_file = None 
+            next_file = None
+            if current_behaviour == 'ANIMATION_LIGHTS_ON' and len(already_enabled_files) > 1: 
+                idx_holder = {'GET_ANIMATION_IDX': None}
+                self.communication_queue.put(idx_holder)
+                self.communication_queue.join()
+                animation_index = idx_holder['GET_ANIMATION_IDX']
+                prev_file = already_enabled_files[(animation_index - 1) % len(already_enabled_files)]
+                next_file = already_enabled_files[(animation_index + 1) % len(already_enabled_files)]
+                curr_file = already_enabled_files[animation_index]
+
+                if len(already_enabled_files) == 2:
+                    prev_file = None
+
             return render_template("index.html", fileNames=file_names, enabledFiles=already_enabled_files, duration=animation_duration, 
                                    brightness=brightness, default_light_setting=default_behaviour, current_behaviour=self.current_behaviour, 
                                    primary_color=primary_color, secondary_color=secondary_color, username=username, spotify_lights_timed_out=self.spotify_lights_timed_out,
-                                   strip_type=led_strip_type, led_count=led_count)
+                                   strip_type=led_strip_type, led_count=led_count, curr_file=curr_file, prev_file=prev_file, next_file=next_file)
 
         @app.route('/login', methods=['GET'])
         def login():
@@ -236,8 +251,6 @@ class API:
                     existing_animation_files = os.listdir(UPLOAD_FOLDER)
                     existing_animation_names = [name[:-3] for name in existing_animation_files if self._allowed_file(name)]
 
-    
-                    print("exisitng: ", selected_animations)
                     if not existing_animation_names:
                         return "NO_FILES_AVAILABLE", 400
                     
@@ -259,8 +272,18 @@ class API:
                 else:
                     return Response(status=200)
 
+        @app.route('/next_animation', methods=['GET'])
+        def skip_animation():
+            self.communication_queue.put({'NEXT_ANIMATION'})
+            self.communication_queue.join()
+            return redirect("/")
 
-
+        @app.route('/prev_animation', methods=['GET'])
+        def go_to_prev_animation():
+            self.communication_queue.put({'PREV_ANIMATION'})
+            self.communication_queue.join()
+            return redirect("/")
+        
         app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
         # max content length = 16 megabytes
         app.config['MAX_CONTENT_LENGTH'] = 16 * 1000 * 1000

@@ -38,8 +38,18 @@ class AnimationController:
                 if message == self.kill_sentinel:
                     self.lights.fill_all(0, 0, 0)
                     self.lights.show()
+                    self.controller_to_animation_queue.task_done()
                     return
-            
+                if message == 'NEXT_ANIMATION':
+                    self.animation_idx = (self.animation_idx + 1) % len(self.animations)
+                    self.controller_to_animation_queue.task_done()
+                if message == 'PREV_ANIMATION':
+                    self.animation_idx = (self.animation_idx - 1) % len(self.animations)
+                    self.controller_to_animation_queue.task_done()
+                if 'GET_ANIMATION_IDX' in message:
+                    message['GET_ANIMATION_IDX'] = self.animation_idx
+                    self.controller_to_animation_queue.task_done()
+
             # move on to the next animation if time for current animation is up or we have not started any animation yet
             current_time_ms = int(time() * 1000) 
             if current_time_ms - time_of_animation_start_ms > self.animation_time_ms:

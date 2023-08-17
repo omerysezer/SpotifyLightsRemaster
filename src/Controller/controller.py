@@ -83,9 +83,23 @@ class Controller:
                     self._kill_spotify_lights()
                     self._kill_animation_thread()
                     self.led_strip = LED_STRIP(num_led, strip_type)
+                if 'NEXT_ANIMATION' in message:
+                    if self._animation_is_running():
+                        self.controller_to_animation_queue.put('NEXT_ANIMATION')
+                        self.controller_to_animation_queue.join()
+                if 'PREV_ANIMATION' in message:
+                    if self._animation_is_running():
+                        self.controller_to_animation_queue.put('PREV_ANIMATION')
+                        self.controller_to_animation_queue.join()
+                if 'GET_ANIMATION_IDX' in message:
+                    idx_holder = {'GET_ANIMATION_IDX': None}
+                    self.controller_to_animation_queue.put(idx_holder)
+                    self.controller_to_animation_queue.join()
+                    idx = idx_holder['GET_ANIMATION_IDX']
+                    message['GET_ANIMATION_IDX'] = idx
 
-                    
                 self.api_communicaton_queue.task_done()
+            
             if not self.light_to_controller_queue.empty():
                 message = self.light_to_controller_queue.get()
                 if message == 'USER NOT LOGGED IN':
@@ -199,7 +213,8 @@ class Controller:
             return
 
         self.controller_to_animation_queue.put(self.animation_kill_sentinel)
-        self.animation_thread.join(timeout=10)
+        self.controller_to_animation_queue.join()
+        self.animation_thread.join()
 
         if self._animation_is_running():
             raise Exception("Could Not Kill Animation Thread")

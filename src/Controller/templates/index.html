@@ -103,6 +103,22 @@
     
     <br/>
     <br/>
+    
+    {% block content %}
+    {% if curr_file %}
+    <span>Current: "{{curr_file}}"</span>
+    <br>
+    <a href="/next_animation"><button>Skip To Next Animation: "{{next_file}}"</button></a>
+    <!-- <br>
+    <span style="color: lightgray">Next Animation: {{next_file}}</span> -->
+    {% endif %}
+    {% if prev_file %}
+    <!-- <span style="color: lightgray">Previous Animation: {{prev_file}}</span>
+    <br> -->
+    <a href="/prev_animation"><button>Skip To Previous Animation: "{{prev_file}}"</button></a>
+    <br>
+    {% endif %}
+    {% endblock content %}
     <form id="animation_form" action="/animation_files">
         <div class=container>
             <button type="button" name="dumb" id="select_deselect_all" value="select" onclick="check_uncheck_all_boxes()">Select All</button>
