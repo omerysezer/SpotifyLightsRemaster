@@ -158,7 +158,6 @@ class API:
                 return f'Strip type: {strip_type} is unsupported.', 400
             
             self.settings_handler.update_led_count(num_led)
-
             self.communication_queue.put({'UPDATE_STRIP_TYPE': {'NUM_LED': num_led, 'STRIP_TYPE': strip_type}})
             self.communication_queue.join()
             return redirect("/")
@@ -287,4 +286,4 @@ class API:
         app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
         # max content length = 16 megabytes
         app.config['MAX_CONTENT_LENGTH'] = 16 * 1000 * 1000
-        app.run(host='192.168.1.80', port=9090)
+        app.run(host='localhost', port=9090)
