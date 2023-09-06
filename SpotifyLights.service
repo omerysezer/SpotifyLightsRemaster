@@ -1,0 +1,15 @@
+[Unit]
+Description=Service to run spotify lights code continuously.
+After=multi-user.target
+
+[Service]
+type=simple
+Restart=always
+WorkingDirectory=/home/pi/SpotifyLightsRemaster
+ExecStart=python main.py
+
+StandardOutput=syslog
+StandardError=syslog
+
+[Install]
+WantedBy=multi-user.target
