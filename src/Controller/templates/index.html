@@ -233,7 +233,7 @@
 
     function on_brightness_change(){
         brightness_slider = document.getElementById('brightness')
-        fetch("http://192.168.1.80:9090/brightness", {
+        fetch("/brightness", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
