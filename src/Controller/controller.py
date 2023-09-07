@@ -75,7 +75,13 @@ class Controller:
                     self._start_spotify_lights()
                 if 'ANIMATION_SETTINGS_UPDATED' in message:
                     self._kill_animation_thread()
-                    self._start_animation_thread()
+                    self.settings_lock.acquire()
+                    default_behaviour = self.settings_handler.get_default_behaviour()
+                    self.settings_lock.release()
+
+                    if (default_behaviour == "ANIMATION_LIGHTS_ON" and not self.current_command) or self.current_command == "ANIMATION_LIGHTS_ON":
+                        self._start_animation_thread()
+
                 if 'UPDATE_STRIP_TYPE' in message:
                     strip_details = message['UPDATE_STRIP_TYPE']
                     num_led = strip_details['NUM_LED']
