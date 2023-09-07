@@ -1,5 +1,5 @@
 USERNAME = '<SPOTFY_USER_NAME>'
 SPOTIPY_CLIENT_ID = '<SPOTIPY_CLIENT_ID>'
 SPOTIPY_CLIENT_SECRET = 'SPOTIPY_CLIENT_SECRET'
-SPOTIPY_REDIRECT_URI = 'http://192.168.1.80:9090/spotifyredirect'
+SPOTIPY_REDIRECT_URI = 'http://<ADDRESS>/spotifyredirect'
 PERMISSION_SCOPE = 'user-modify-playback-state user-read-currently-playing user-read-playback-state'
