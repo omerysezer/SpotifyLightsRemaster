@@ -259,15 +259,19 @@ class API:
                     for animation in selected_animations:
                         if animation not in existing_animation_names:
                             return f"FILE_NOT_FOUND: {animation}", 500
-                    
+
+                    zip_path = './src/Controller/temp_files/selected_animations.zip'                    
+                    if os.path.exists(zip_path):
+                        os.remove(zip_path)
+
                     with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipped_folder:
                         for animation in selected_animations:
                             zipped_folder.write(UPLOAD_FOLDER + '/' + animation + '.py', arcname=animation + '.py')
                         zipped_folder.close()
 
-                    # hack because send_file doesnt like absolute paths
-                    zip_path = 'temp_files/selected_animations.zip'
-                    return send_file(zip_path, mimetype='zip', download_name='animations.zip', as_attachment=True)
+                    # does not use zip_path because send_file doesnt like absolute paths
+                    zip_path_not_absolute = 'temp_files/selected_animations.zip'
+                    return send_file(zip_path_not_absolute, mimetype='zip', download_name='animations.zip', as_attachment=True)
                 else:
                     return Response(status=200)
 
