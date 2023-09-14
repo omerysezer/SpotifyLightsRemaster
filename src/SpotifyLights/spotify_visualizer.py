@@ -207,7 +207,7 @@ class SpotifyVisualizer:
         Args:
             wait (float): the amount of time in seconds to wait between each check.
         """
-        time_until_timeout_ms = 10 * 1000 # check if pausing for 5 minutes. If this time elapses, assume the user has stopped using the lights and kill.
+        time_until_timeout_ms = 300 * 1000 # check if pausing for 5 minutes. If this time elapses, assume the user has stopped using the lights and kill.
         start_time = time.time() * 1000
 
         ms_between_checks = wait * 1000
