@@ -108,16 +108,18 @@ class Controller:
             
             if not self.light_to_controller_queue.empty():
                 message = self.light_to_controller_queue.get()
+                
                 if message == 'USER NOT LOGGED IN':
                     self._kill_spotify_lights()
                 
                 if message == 'TIMED_OUT':
                     self._kill_spotify_lights()
+                    
                     self.spotify_lights_encounterd_error = True
                     if self.current_command == 'SPOTIFY_LIGHTS_ON':
                         self.current_command = None
-                    
                     self.api.notify_spotify_lights_timed_out()
+                    
 
             authenticated = user_is_logged_in()
             if not authenticated:
@@ -189,7 +191,6 @@ class Controller:
             return
 
         self.controller_to_lights_queue.put(self.spotify_lights_kill_sentinel)
-        self.controller_to_lights_queue.join() # wait for spotify lights to mark command as completed
         self.spotify_lights_thread.join() 
 
         self.controller_to_lights_queue = Queue() # clear the queues if there were any messages waiting

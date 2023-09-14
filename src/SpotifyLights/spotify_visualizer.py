@@ -116,6 +116,8 @@ class SpotifyVisualizer:
 
                 if not self.track or not self.track["item"]:
                     self.track = None
+                else:
+                    start_time = time.time() * 1000
 
                 ms_of_last_check = time.time() * 1000    
             time.sleep(.05)
@@ -205,7 +207,7 @@ class SpotifyVisualizer:
         Args:
             wait (float): the amount of time in seconds to wait between each check.
         """
-        time_until_timeout_ms = 300 * 1000 # check if pausing for 5 minutes. If this time elapses, assume the user has stopped using the lights and kill.
+        time_until_timeout_ms = 10 * 1000 # check if pausing for 5 minutes. If this time elapses, assume the user has stopped using the lights and kill.
         start_time = time.time() * 1000
 
         ms_between_checks = wait * 1000
@@ -214,6 +216,8 @@ class SpotifyVisualizer:
             if time.time() * 1000 - ms_of_last_check >= ms_between_checks:
                 try:
                     self.is_playing = self.sp_pause.current_playback()["is_playing"]
+                    if self.is_playing:
+                       start_time = time.time() * 1000
                 except:
                     text = "Error occurred while checking if playback is paused...retrying in {} seconds.".format(wait)
                     print(SpotifyVisualizer._make_text_effect(text, ["red", "bold"]))
@@ -243,7 +247,6 @@ class SpotifyVisualizer:
         track = self.track
         while track and track["item"] and self.track and self.track["item"] and  track["item"]["id"] == self.track["item"]["id"]:
             if self.song_ended:
-                print('hi')
                 text = "Killing skip checking thread. (FORCE)"
                 print(SpotifyVisualizer._make_text_effect(text, ["red", "bold"]))
                 exit(0)

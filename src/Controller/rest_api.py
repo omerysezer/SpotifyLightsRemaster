@@ -34,12 +34,14 @@ class API:
             filename.rsplit('.', 1)[1].lower() in ['py']
     
     def notify_spotify_lights_timed_out(self):
+        self.settings_lock.acquire()
         self.behavior_lock.acquire()
         self.timed_out_lock.acquire()
         self.current_behaviour = self.settings_handler.get_default_behaviour()
         self.spotify_lights_timed_out = True
         self.timed_out_lock.release()
         self.behavior_lock.release()
+        self.settings_lock.release()
 
     def run(self):
         app = Flask(__name__)
@@ -204,6 +206,7 @@ class API:
                         try:
                             filename = secure_filename(file.filename)
                             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                            os.execl(sys.executable, sys.executable, *sys.argv)
                             return Response(status=200)
                         except:
                             return Response(status=500)
