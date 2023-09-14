@@ -66,3 +66,7 @@ class LED_STRIP:
         num_led = self.num_led
         self.light_lock.release()
         return self.num_led
+
+    def reset(self):
+        self.fill_all(0, 0, 0)
+        self.show()

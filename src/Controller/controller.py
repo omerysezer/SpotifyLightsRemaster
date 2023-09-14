@@ -105,21 +105,17 @@ class Controller:
                     message['GET_ANIMATION_IDX'] = idx
 
                 self.api_communicaton_queue.task_done()
-            
             if not self.light_to_controller_queue.empty():
                 message = self.light_to_controller_queue.get()
-                
+
                 if message == 'USER NOT LOGGED IN':
                     self._kill_spotify_lights()
-                
                 if message == 'TIMED_OUT':
                     self._kill_spotify_lights()
-                    
                     self.spotify_lights_encounterd_error = True
                     if self.current_command == 'SPOTIFY_LIGHTS_ON':
                         self.current_command = None
                     self.api.notify_spotify_lights_timed_out()
-                    
 
             authenticated = user_is_logged_in()
             if not authenticated:
@@ -128,7 +124,7 @@ class Controller:
             # default behaviour should only be triggered if there is no overriding command in self.current_command
             if not self.current_command and self.led_strip:
                 self.settings_lock.acquire()
-                default_behaviour = self.settings_handler.get_default_behaviour() 
+                default_behaviour = self.settings_handler.get_default_behaviour()
                 self.settings_lock.release()
 
                 if default_behaviour == "SPOTIFY_LIGHTS_ON" and not self._spotify_lights_are_running() and authenticated:
@@ -148,6 +144,7 @@ class Controller:
                 elif default_behaviour == "LIGHTS_OFF":
                     self._kill_spotify_lights()
                     self._kill_animation_thread()
+                    self.led_strip.reset()
             elif self.current_command and self.led_strip:
                 if self.current_command == "SPOTIFY_LIGHTS_ON" and not self._spotify_lights_are_running() and authenticated:
                      if not self.spotify_lights_encounterd_error:
@@ -166,13 +163,15 @@ class Controller:
                 elif self.current_command == "LIGHTS_OFF":
                     self._kill_spotify_lights()
                     self._kill_animation_thread()
-                    
+                    self.led_strip.reset()
+
             time.sleep(.1)
 
     def _start_spotify_lights(self):
         if self._spotify_lights_are_running() or not self.led_strip:
             return
-        
+
+        self.led_strip.reset()
         self.settings_lock.acquire()
         primary_color = self.settings_handler.get_primary_color()
         secondary_color = self.settings_handler.get_secondary_color()
@@ -195,6 +194,7 @@ class Controller:
 
         self.controller_to_lights_queue = Queue() # clear the queues if there were any messages waiting
         self.light_to_controller_queue = Queue()
+        self.led_strip.reset()
 
     def _spotify_lights_are_running(self):
         return self.spotify_lights_thread and self.spotify_lights_thread.is_alive()
@@ -202,7 +202,8 @@ class Controller:
     def _start_animation_thread(self):
         if self._animation_is_running() or not self.led_strip:
             return
-        
+
+        self.led_strip.reset()
         self.settings_lock.acquire()
         animation_list = self.settings_handler.get_animations()
         animation_duration = self.settings_handler.get_animation_duration()
@@ -228,6 +229,7 @@ class Controller:
         
         self.animation_to_controller_queue = Queue()
         self.controller_to_animation_queue = Queue()
-        
+        self.led_strip.reset()
+
     def _animation_is_running(self):
         return self.animation_thread and self.animation_thread.is_alive() 
