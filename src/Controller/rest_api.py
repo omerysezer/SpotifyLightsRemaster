@@ -96,6 +96,11 @@ class API:
                                    primary_color=primary_color, secondary_color=secondary_color, username=username, spotify_lights_timed_out=self.spotify_lights_timed_out,
                                    strip_type=led_strip_type, led_count=led_count, curr_file=curr_file, prev_file=prev_file, next_file=next_file)
 
+        @app.route('/favicon.ico', methods=['GET'])
+        def favicon():
+            return send_from_directory(os.path.join(app.root_path, 'static'), 
+                   'favicon.ico', mimetype='image/vnd.microsoft.icon')
+
         @app.route('/login', methods=['GET'])
         def login():
             state = ''.join(random.choices(string.ascii_letters + string.digits, k = 16))
